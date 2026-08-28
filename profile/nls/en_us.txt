@@ -1,0 +1,14 @@
+
+
+ND-261318-NAME = Eisy AI 
+ND-261318-ICON = Weather
+
+ND-eisy-aicontrol-NAME = Eisy-ai Controller
+ND-eisy-aicontrol-ICON = GenericCtl
+
+ST-eisy-aicontrol-ST-NAME = Status
+
+CMD-eisy-aicontrol-discover-NAME = Discover
+CMD-eisy-aicontrol-x_query-NAME = Query
+NLSIX_CTL_BOOL-0 = Disconnected
+NLSIX_CTL_BOOL-1 = Connected
