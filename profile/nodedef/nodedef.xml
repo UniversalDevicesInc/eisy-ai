@@ -1,0 +1,23 @@
+<nodedefs>
+
+<nodedef id="261318" nls="261318">
+<sts>
+</sts>
+<cmds>
+<sends/>
+<accepts/>
+</cmds>
+</nodedef>
+<nodedef id="eisy-aicontrol" nls="eisy-aicontrol">
+<sts>
+<st id="ST" editor="CTL_BOOL" />
+</sts>
+<cmds>
+<sends/>
+<accepts>
+<cmd id="discover"/>
+<cmd id="x_query"/>
+</accepts>
+</cmds>
+</nodedef>
+</nodedefs>
