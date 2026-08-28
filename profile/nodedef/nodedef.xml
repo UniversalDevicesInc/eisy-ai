@@ -1,6 +1,6 @@
 <nodedefs>
 
-<nodedef id="261318" nls="261318">
+<nodedef id="eisyai" nls="eisyai">
 <sts>
 </sts>
 <cmds>
@@ -8,7 +8,7 @@
 <accepts/>
 </cmds>
 </nodedef>
-<nodedef id="eisy-aicontrol" nls="eisy-aicontrol">
+<nodedef id="eisyaicontroll" nls="eisyaicontroll">
 <sts>
 <st id="ST" editor="CTL_BOOL" />
 </sts>

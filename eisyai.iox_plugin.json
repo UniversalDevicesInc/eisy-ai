@@ -1,0 +1,40 @@
+{
+    "plugin": {
+          "name":"eisyai",
+          "description":"eisy AI Companpanion",
+          "publisher":"UD",
+          "language": "python3",
+          "executableName":"eisyai.py",
+          "installScript":"install.sh",
+          "documentationLink":"https://github.com/UniversalDevicesInc/eisy-ai/blob/main/README.md",
+          "licenseLink":"https://github.com/UniversalDevicesInc/eisy-ai/blob/main/LICENSE",
+          "shortPoll":26400,
+          "longPoll":52000,
+          "profileVersion":"3.0.0",
+          "initialLogLevel":"DEBUG",
+          "enableDiscovery":false,
+          "enableOAUTH2":false,
+          "worksOnPolisy":false,
+          "worksOnEisy":true,
+          "requiresIoXAccess": true,
+          "requirements": [
+            "nucore-ai"
+          ],
+          "version": "1.0.0"
+    },
+    "editors": [
+    ],
+    "nodedefs": [
+        {
+            "id":"eisyai",
+            "name":"Eisy AI",
+            "icon":"Weather",
+            "properties": [
+            ],
+            "commands": {
+                "accepts": [],
+                "sends": []
+            } 
+        }
+    ]
+}
