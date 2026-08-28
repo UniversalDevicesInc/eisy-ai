@@ -1,14 +1,14 @@
 
 
-ND-261318-NAME = Eisy AI 
-ND-261318-ICON = Weather
+ND-eisyai-NAME = Eisy AI
+ND-eisyai-ICON = Weather
 
-ND-eisy-aicontrol-NAME = Eisy-ai Controller
-ND-eisy-aicontrol-ICON = GenericCtl
+ND-eisyaicontroll-NAME = Eisyai Controller
+ND-eisyaicontroll-ICON = GenericCtl
 
-ST-eisy-aicontrol-ST-NAME = Status
+ST-eisyaicontroll-ST-NAME = Status
 
-CMD-eisy-aicontrol-discover-NAME = Discover
-CMD-eisy-aicontrol-x_query-NAME = Query
+CMD-eisyaicontroll-discover-NAME = Discover
+CMD-eisyaicontroll-x_query-NAME = Query
 NLSIX_CTL_BOOL-0 = Disconnected
 NLSIX_CTL_BOOL-1 = Connected
