@@ -1,6 +1,6 @@
 .venv/
-.logs/
-.__pycache__/
+logs/
+__pycache__/
 .iox_env
 *.cert
 *.key
