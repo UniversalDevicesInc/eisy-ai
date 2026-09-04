@@ -15,9 +15,9 @@ You will be using your own LLM/model and API Keys.
 1. Provider
 ** Mandatory **
 This is the name of your frontier LLM provider. Currently limited to:
-| Anthropic Claude | `claude`, `anthropic` 
+| Anthropic Claude | `anthropic`
 | OpenAI | `openai` 
-| xAI Grok | `grok`, `xai` 
+| xAI Grok | `grok`
 
 Support for local LLM is in the works.
 
@@ -25,7 +25,7 @@ Support for local LLM is in the works.
 ** Mandatory **
 The API Key for the provider being used
 
-3. Model ID
+3. Model
 ** Optional **
 If not provided, based on the provider, we'll default to the least expensive model that's been tested and works with the current use cases.
 * Examples:

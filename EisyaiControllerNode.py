@@ -1,9 +1,12 @@
 
+from pathlib import Path
+
 import udi_interface, os, shutil, sys, json, time, threading
 from udi_interface import OAuth
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
 from ioxplugin import Plugin, OAuthService
+from start_eisyai import start_eisyai
 
 DATA_PATH='./data'
 from EisyAINode import EisyAINode
@@ -345,7 +348,7 @@ class EisyaiControllerNode(udi_interface.Node):
             return
         try:
             self.poly.udm_alert(title, body)
-        except exception as ex:
+        except Exception as ex:
             LOGGER.error(str(ex))
 
     def __discover(self):
@@ -357,6 +360,14 @@ class EisyaiControllerNode(udi_interface.Node):
     commands = {'discover': __discover, 'x_query': __query}
 
     """########WARNING: DO NOT MODIFY THIS LINE!!! NOTHING BELOW IS REGENERATED!#########"""
+
+    provider = None
+    model = None
+    api_key = None
+    claude_config_path = None
+    openai_config_path = None
+    grok_config_path = None
+
     
     #############################
     ###### START|STOP ###########
@@ -371,8 +382,12 @@ class EisyaiControllerNode(udi_interface.Node):
         disconnected. So, make sure you return the correct status.
         """
         try:
+            global provider, model
+            model = start_eisyai(provider, model, api_key, self.poly)
             return True
+
         except Exception as ex:
+            self.setNotices("Eisy AI", str(ex))
             LOGGER.error(f'start failed .... ')
             LOGGER.error(str(ex))
             return False
@@ -401,6 +416,15 @@ class EisyaiControllerNode(udi_interface.Node):
         params['path']
         """
         try:
+            global provider, model, api_key
+            for key, value in params.items():
+                if key == "Provider":
+                    provider = value
+                elif key == "Model":
+                    model = value
+                elif key == "API Key":
+                    api_key = value
+
             return True
         except Exception as ex:
             LOGGER.error(f'process param failed .... ')
