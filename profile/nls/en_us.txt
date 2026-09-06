@@ -3,7 +3,7 @@
 ND-eisyai-NAME = Eisy AI
 ND-eisyai-ICON = Weather
 
-ND-eisyaicontroll-NAME = Eisyai Controller
+ND-eisyaicontroll-NAME = eisy-ai 
 ND-eisyaicontroll-ICON = GenericCtl
 
 ST-eisyaicontroll-ST-NAME = Status

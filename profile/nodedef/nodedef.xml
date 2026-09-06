@@ -1,13 +1,5 @@
 <nodedefs>
 
-<nodedef id="eisyai" nls="eisyai">
-<sts>
-</sts>
-<cmds>
-<sends/>
-<accepts/>
-</cmds>
-</nodedef>
 <nodedef id="eisyaicontroll" nls="eisyaicontroll">
 <sts>
 <st id="ST" editor="CTL_BOOL" />

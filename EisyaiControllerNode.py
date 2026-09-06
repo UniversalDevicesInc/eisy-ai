@@ -14,11 +14,12 @@ class EisyaiControllerNode(udi_interface.Node):
     id = 'eisyaicontroll'
     """This is a list of properties that were defined in the nodedef"""
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 25, 'name': 'Status'}]
-    children = [{'node_class': 'EisyAINode', 'id': 'eisyai', 'name':
-        'Eisy AI', 'parent': 'eisyaicontroll'}]
+    #children = [{'node_class': 'EisyAINode', 'id': 'eisyai', 'name':
+    #    'Eisy AI', 'parent': 'eisyaicontroll'}]
+    children = []
 
     def __init__(self, polyglot, plugin, controller='eisyaicontroll',
-        address='eisyaicontroll', name='Eisyai Controller'):
+        address='eisyaicontroll', name='eisy-ai'):
         super().__init__(polyglot, controller, address, name)
         self.plugin = plugin
         self.Parameters = Custom(polyglot, 'customparams')
