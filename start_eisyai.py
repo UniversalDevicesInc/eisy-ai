@@ -104,14 +104,21 @@ def start_eisyai(provider: str, model: str | None, api_key: str, polyglot) -> st
     args.backend_api_classpath = "iox.IoXWrapper"
     args.runtime_config = str(runtime_config_path)
     args.preferences_dir = str(preferences_dir)
-    args.websocket_port = 8000
+#### Use these for TCP/WebSocket connections instead of Unix socket
+#    args.websocket_port = 8000
+#    args.websocket_host = "0.0.0.0"
+#### End of TCP/WebSocket configuration
+#### Use these for Unix socket connections instead of TCP/WebSocket
+    args.websocket_host = "unix:///tmp/ai-listener"
+    args.websocket_client_id = 348 
+#### End of Unix socket configuration
     args.ssl_certfile = str(ssl_certfile)
     args.ssl_keyfile = str(ssl_keyfile)
     args.log_level = "INFO"
     args.stream = True
     args.backend_api_base_url = "unix:///tmp/eisyui-listener"
     args.backend_api_username = "eisyai"
-    args.backend_api_password = "rules"  
+    args.backend_api_password = "rules" 
 
     threading.Thread(target=eisyai_main, args=(args, None)).start()
     return model
