@@ -1,7 +1,7 @@
 #!/bin/sh
 version=$(cat version.py | awk -F'=' '{print $2}' | sed 's/\"//g')
 
-tar -czvf eisyai-${version}.tar.gz \
+zip -r eisyai-${version}.zip \
 EisyAINode.py \
 EisyaiControllerNode.py \
 LICENSE \
