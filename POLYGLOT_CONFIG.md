@@ -18,6 +18,7 @@ This is the name of your frontier LLM provider. Currently limited to:
 | Anthropic Claude | `anthropic`
 | OpenAI | `openai` 
 | xAI Grok | `grok`
+| Google Gemini | `gemini` : ** Currently, not very predictable **
 
 Support for local LLM is in the works.
 
@@ -32,3 +33,4 @@ If not provided, based on the provider, we'll default to the least expensive mod
 `claude-haiku-4-5-20251001`
 `gpt-5.6-luna`
 `grok-4-fast`
+`gemini-flash-latest`

@@ -10,5 +10,9 @@
     "grok": {
         "api_key_name": "GROK_API_KEY",
         "model": "grok-4-fast"
+    },
+    "gemini": {
+        "api_key_name": "GEMINI_API_KEY",
+        "model": "gemini-flash-latest"
     }
 }
