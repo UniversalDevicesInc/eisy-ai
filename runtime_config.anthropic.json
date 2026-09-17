@@ -2,11 +2,16 @@
   "max_iterations": 20,
   "preferences_dir": null,
   "history_token_budget": 20000,
+  "prompt_log_dir": null,
+  "prompt_log_enabled": true,
+  "fabrication_guard_mode": "block",
+  "max_fabrication_retries": 1,
   "nucore_runtime": {
     "default": {
-      "provider": "claude",
+      "provider": "anthropic",
       "model": "claude-haiku-4-5-20251001",
-      "model_2": "claude-sonnet-5",
+      "model_2": "claude-haiku-4-5-20251001",
+      "model_3": "claude-haiku-4-5-20251001",
       "api_key": "${ANTHROPIC_API_KEY}",
       "url": null,
       "max_turns": 20,
@@ -14,9 +19,10 @@
       "max_tokens": 64000
     },
     "unified": {
-      "provider": "claude",
+      "provider": "anthropic",
       "model": "claude-haiku-4-5-20251001",
-      "model_2": "claude-sonnet-5",
+      "model_2": "claude-haiku-4-5-20251001",
+      "model_3": "claude-haiku-4-5-20251001",
       "api_key": "${ANTHROPIC_API_KEY}",
       "stream": true,
       "url": null,

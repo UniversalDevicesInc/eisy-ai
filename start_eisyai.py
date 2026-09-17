@@ -95,6 +95,19 @@ def start_eisyai(provider: str, model: str | None, api_key: str, polyglot) -> st
             f"Runtime config not found for the provider: {provider}"
         )
 
+    try:
+        import json
+        runtime_config = json.load(runtime_config_path.open())
+        if not runtime_config:
+            raise ValueError("Runtime config is empty")
+        for rc in runtime_config.get("nucore_runtime", {}).values():
+            rc["provider"] = provider
+            rc["model"] = model
+        with runtime_config_path.open("w") as f:
+            json.dump(runtime_config, f, indent=2)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load runtime config: {e}")
+
     ssl_certfile, ssl_keyfile = _ensure_ssl_files(home_directory / "data" / "ssl")
 
     from unified.run_unified_runtime import _build_parser
