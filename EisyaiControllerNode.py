@@ -1,5 +1,6 @@
 
 from pathlib import Path
+import re
 
 import udi_interface, os, shutil, sys, json, time, threading
 from udi_interface import OAuth
@@ -362,12 +363,7 @@ class EisyaiControllerNode(udi_interface.Node):
 
     """########WARNING: DO NOT MODIFY THIS LINE!!! NOTHING BELOW IS REGENERATED!#########"""
 
-    provider = None
-    model = None
-    api_key = None
-    claude_config_path = None
-    openai_config_path = None
-    grok_config_path = None
+    runtime_config = None
 
     
     #############################
@@ -383,8 +379,12 @@ class EisyaiControllerNode(udi_interface.Node):
         disconnected. So, make sure you return the correct status.
         """
         try:
-            global provider, model
-            model = start_eisyai(provider, model, api_key, self.poly)
+            global runtime_config
+            if runtime_config is None:
+                self.setNotices("Eisy AI", "Runtime configuration is not set")
+                return False
+            runtime_config = json.loads(runtime_config)
+            model = start_eisyai(runtime_config, self.poly)
             return True
 
         except Exception as ex:
@@ -417,19 +417,24 @@ class EisyaiControllerNode(udi_interface.Node):
         params['path']
         """
         try:
-            global provider, model, api_key
+            global runtime_config
             for key, value in params.items():
-                if key == "Provider":
-                    provider = value
-                elif key == "Model":
-                    model = value
-                elif key == "API Key":
-                    api_key = value
+                if key == "Configuration":
+                    runtime_config = self.extract_json_block(value)
 
             return True
         except Exception as ex:
             LOGGER.error(f'process param failed .... ')
+            LOGGER.error(str(ex))
             return False
+
+    def extract_json_block(self, text: str) -> str:
+        try:
+            match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+            return match.group(1) if match else text
+        except Exception as ex:
+            LOGGER.error(f'extract_json_block failed .... ')
+            return None 
 
     def customParamHandler(self, key, value):
         """

@@ -62,76 +62,62 @@ def _ensure_ssl_files(ssl_dir: Path) -> tuple[Path, Path]:
     return ssl_certfile, ssl_keyfile
 
 
-def start_eisyai(provider: str, model: str | None, api_key: str, polyglot) -> str:
+def start_eisyai(runtime_config: dict, polyglot) -> str:
     """Configure and start the Eisy AI runtime, returning the selected model."""
-    if not provider:
-        raise ValueError("Provider is not set")
-    if not api_key:
-        raise ValueError("API Key is not set")
-    if provider not in SUPPORTED_PROVIDERS:
-        raise ValueError(f"Unsupported provider: {provider}")
 
-    provider_settings = get_provider_map(provider)
-    if not provider_settings:
-        raise ValueError("Provider not found in provider map")
 
-    model = model or provider_settings.get("model")
-    if not model:
-        raise ValueError("Model is not set and no provider default is available")
 
-    api_key_name = provider_settings.get("api_key_name")
-    if not api_key_name:
-        raise ValueError("API Key name not found in provider map")
-    os.environ[api_key_name] = api_key
+#    provider_settings = get_provider_map(provider)
+#    if not provider_settings:
+#        raise ValueError("Provider not found in provider map")
+#
+
+#    api_key_name = provider_settings.get("api_key_name")
+#    if not api_key_name:
+#        raise ValueError("API Key name not found in provider map")
+#    os.environ[api_key_name] = api_key
 
     home_directory = Path(__file__).resolve().parent
-    preferences_dir = home_directory / "data" / "prefs"
+    data_dir = home_directory / "persist" 
+    data_dir.mkdir(parents=True, exist_ok=True)
+    preferences_dir = data_dir / "prefs"
     preferences_dir.mkdir(parents=True, exist_ok=True)
-    (home_directory / "logs").mkdir(parents=True, exist_ok=True)
+    logs_dir = home_directory / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    log_file = logs_dir / "eisyai.log"
+    prompts_file = logs_dir / "nucore.prompt.jsonl"
+    plugin_root_directory = Path("/usr/home/admin/eisyai/generated_plugins")
+    plugin_root_directory.mkdir(parents=True, exist_ok=True)
 
-    runtime_config_path = home_directory / f"runtime_config.{provider}.json"
-    if not runtime_config_path.exists():
-        raise FileNotFoundError(
-            f"Runtime config not found for the provider: {provider}"
-        )
 
-    try:
-        import json
-        runtime_config = json.load(runtime_config_path.open())
-        if not runtime_config:
-            raise ValueError("Runtime config is empty")
-        for rc in runtime_config.get("nucore_runtime", {}).values():
-            rc["provider"] = provider
-            rc["model"] = model
-        with runtime_config_path.open("w") as f:
-            json.dump(runtime_config, f, indent=2)
-    except Exception as e:
-        raise RuntimeError(f"Failed to load runtime config: {e}")
-
-    ssl_certfile, ssl_keyfile = _ensure_ssl_files(home_directory / "data" / "ssl")
 
     from unified.run_unified_runtime import _build_parser
     from unified.run_unified_runtime import main as eisyai_main
 
     args = _build_parser().parse_args([])
     args.backend_api_classpath = "iox.IoXWrapper"
-    args.runtime_config = str(runtime_config_path)
+    args.runtime_config = runtime_config
     args.preferences_dir = str(preferences_dir)
 #### Use these for TCP/WebSocket connections instead of Unix socket
+#    ssl_certfile, ssl_keyfile = _ensure_ssl_files(home_directory / "data" / "ssl")
 #    args.websocket_port = 8000
 #    args.websocket_host = "0.0.0.0"
+#    args.ssl_certfile = str(ssl_certfile)
+#    args.ssl_keyfile = str(ssl_keyfile)
 #### End of TCP/WebSocket configuration
 #### Use these for Unix socket connections instead of TCP/WebSocket
     args.websocket_host = "unix:///tmp/ai-listener"
     args.websocket_client_id = 348 
 #### End of Unix socket configuration
-    args.ssl_certfile = str(ssl_certfile)
-    args.ssl_keyfile = str(ssl_keyfile)
     args.log_level = "INFO"
+    args.log_file = str(log_file)
+    args.prompt_log_file = str(prompts_file)
+    args.plugin_output_root = str(plugin_root_directory)
+    
     args.stream = True
+
     args.backend_api_base_url = "unix:///tmp/eisyui-listener"
     args.backend_api_username = "eisyai"
     args.backend_api_password = "rules" 
 
     threading.Thread(target=eisyai_main, args=(args, None)).start()
-    return model
