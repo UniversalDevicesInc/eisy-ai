@@ -202,7 +202,7 @@ class EisyaiControllerNode(udi_interface.Node):
 
             except ValueError as err:
                 LOGGER.warning('Access token is not yet available. Please authenticate.')
-                polyglot.Notices['auth'] = 'Please initiate authentication using the Authenticate Buttion'
+                self.polyglot.Notices['auth'] = 'Please initiate authentication using the Authenticate Buttion'
                 return False
         with self.configDone:
             self.configDoneAlready = True

@@ -89,8 +89,6 @@ def start_eisyai(runtime_config: dict, polyglot) -> str:
     plugin_root_directory = Path("/usr/home/admin/eisyai/generated_plugins")
     plugin_root_directory.mkdir(parents=True, exist_ok=True)
 
-
-
     from unified.run_unified_runtime import _build_parser
     from unified.run_unified_runtime import main as eisyai_main
 
