@@ -15,8 +15,5 @@ provider_map.json \
 provider_map.py \
 requirements.txt \
 constraints.txt \
-runtime_config.anthropic.json \
-runtime_config.grok.json \
-runtime_config.openai.json \
 start_eisyai.py \
 version.py
