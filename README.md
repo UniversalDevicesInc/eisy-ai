@@ -6,7 +6,7 @@ depends on which of its two modes is active:
 - **Customer mode** — control and understand your smart home: devices, scenes, routines,
   plugins, and day-to-day troubleshooting.
 - **Developer mode** — build, test, and publish your own eisy plugins: researching a device's
-  API, generating a working node-server, debugging it in VS Code, and pushing it to GitHub.
+  API, generating a working plugin, debugging it in VS Code, and pushing it to GitHub.
 
 Every conversation starts in customer mode. This document covers both modes, and — since it's
 easy to miss — how to actually get from one to the other.
@@ -194,10 +194,10 @@ what it can do.
 
 ## 2. For Developers
 
-Developer mode walks you through building a real, working eisy/IoX plugin ("node server") end to
-end, conversationally: researching the target device or service, defining how it shows up as a
-node, generating the actual plugin code, testing it on a real hub, debugging it in VS Code, and
-pushing it to GitHub. Not sure how you got here? See "Switching between modes" above — the same
+Developer mode walks you through building a real, working eisy/IoX plugin end to end,
+conversationally: researching the target device or service, defining how it shows up as a node,
+generating the actual plugin code, testing it on a real hub, debugging it in VS Code, and pushing
+it to GitHub. Not sure how you got here? See "Switching between modes" above — the same
 `/customer` command (or just asking) takes you back. A few rules apply across the whole workflow:
 
 > **Generating a plugin only ever touches your local disk.** Nothing changes on a real hub until
