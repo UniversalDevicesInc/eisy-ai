@@ -8,8 +8,84 @@ depends on which of its two modes is active:
 - **Developer mode** — build, test, and publish your own eisy plugins: researching a device's
   API, generating a working plugin, debugging it in VS Code, and pushing it to GitHub.
 
-Every conversation starts in customer mode. This document covers both modes, and — since it's
-easy to miss — how to actually get from one to the other.
+Every conversation starts in customer mode. This document starts with configuration (do this
+first), then covers both modes and — since it's easy to miss — how to actually get from one to
+the other.
+
+---
+
+## Configuration
+
+eisy-ai calls out to your own LLM provider, so before you use it you'll need that provider's API
+key in hand. Configuration itself is one JSON object, covering two independently-configured
+profiles — `unified` (customer mode) and `plugin_authoring` (developer mode) — each with its own
+provider, model, and settings. Outside of a few file-location fields, you're free to configure
+each profile differently (e.g. a faster/cheaper model for everyday customer requests, a stronger
+one for plugin authoring).
+
+Here's a working example using Claude for both modes — replace
+`Replace_with_your_Anthropic_API_Key` with your own key and adjust the model names as needed. You
+don't need to configure anything for web search: when the provider is Claude, its own built-in
+search tool is used automatically.
+
+````json
+```json
+{
+  "max_tool_set_switches_per_turn": 1,
+  "search_engine": null,
+  "search_engine_api_key": null,
+  "nucore_runtime": {
+    "unified": {
+      "enabled": true,
+      "provider": "claude",
+      "model": "claude-haiku-5-5",
+      "api_key": "Replace_with_your_Anthropic_API_Key",
+      "stream": true,
+      "url": null,
+      "max_turns": 20,
+      "max_tokens": 64000,
+      "cache_ttl": "5m",
+      "max_iterations": 20,
+      "history_token_budget": 20000,
+      "fabrication_guard_mode": "log",
+      "max_fabrication_retries": 1
+    },
+    "plugin_authoring": {
+      "enabled": true,
+      "provider": "claude",
+      "model": "claude-sonnet-5-5",
+      "api_key": "Replace_with_your_Anthropic_API_Key",
+      "stream": true,
+      "url": null,
+      "max_turns": 20,
+      "max_tokens": 64000,
+      "cache_ttl": "5m",
+      "max_iterations": 50,
+      "history_token_budget": 20000,
+      "fabrication_guard_mode": "log",
+      "max_fabrication_retries": 1
+    }
+  }
+}
+```
+````
+
+A few fields worth knowing up front:
+
+| Field | What it does |
+|---|---|
+| `provider` | Which LLM backend that profile calls: `claude`, `openai`, `gemini`, `grok`, or a local `llamacpp` server. |
+| `model` | The exact model id passed to that provider. |
+| `api_key` | Your API key for that provider (not needed for an unauthenticated local `llamacpp` server). |
+| `enabled` | Turns a profile on or off without deleting its settings. At least one profile must stay enabled. |
+| `url` | Point at a self-hosted or proxied endpoint instead of the provider's default. |
+| `search_engine` / `search_engine_api_key` | Only needed for a non-Claude provider, or to force Brave/Tavily search instead of Claude's built-in search. |
+| `max_tool_set_switches_per_turn` | Caps how many times one message can bounce between customer and developer mode automatically — see "Switching between modes" below. |
+
+This covers the common case. For the complete field-by-field reference — every option, its
+default, and provider-specific quirks (which fields each provider actually honors, prompt-cache
+behavior, the fabrication-guard retry mechanism, and more) — see `POLYGLOT_CONFIG.md` in this
+same directory.
 
 ---
 
