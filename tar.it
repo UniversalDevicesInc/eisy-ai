@@ -4,7 +4,7 @@ version=$(cat version.py | awk -F'=' '{print $2}' | sed 's/\"//g')
 tar -czvf eisyai-${version}.tar.gz \
 EisyAINode.py \
 EisyaiControllerNode.py \
-LICENSE \
+LICENSE.md \
 POLYGLOT_CONFIG.md \
 README.md \
 eisyai.iox_plugin.json \

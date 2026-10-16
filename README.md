@@ -1,8 +1,329 @@
 # eisy-ai
 
-eisy-ai is your AI companion for eisy. It can help with complex tasks such as:
+eisy-ai is your AI companion for eisy. You talk to it in plain language. What it can actually do
+depends on which of its two modes is active:
 
-- Creating sophisticated routines based on your devices, preferences, and plugins
-- Running complex diagnostics using your system configuration and logs
-- Investigating why something turned on or off seemingly randomly
-- Developing plugins for eisy-ai
+- **Customer mode** — control and understand your smart home: devices, scenes, routines,
+  plugins, and day-to-day troubleshooting.
+- **Developer mode** — build, test, and publish your own eisy plugins: researching a device's
+  API, generating a working node-server, debugging it in VS Code, and pushing it to GitHub.
+
+Every conversation starts in customer mode. This document covers both modes, and — since it's
+easy to miss — how to actually get from one to the other.
+
+---
+
+## Switching between modes
+
+There are two ways to switch, and they behave differently.
+
+**Just ask.** Tell eisy-ai what you want — "I'd like to build a plugin for my SimpliSafe alarm,"
+or, from inside developer mode, "turn off the living room lights" — and it switches on your
+behalf, automatically, mid-conversation. You never have to ask for the switch explicitly. There's
+a limit of one automatic switch per message by default, so if a single message would require
+bouncing back and forth more than that, eisy-ai will say so rather than attempting it — just
+split the request across a couple of messages instead.
+
+**Type the command directly.** Send a message containing *only* `/developer` or `/customer` (no
+other text in that message) to switch immediately and deterministically, no interpretation
+involved. The switch is **sticky** — it stays in effect for the rest of the conversation until
+you switch again, either command or just by asking. You'll get a plain confirmation
+("Switched to developer tools." / "Switched to customer tools.") in response.
+
+One important consequence either way: **the two modes don't share conversation history.**
+Developer mode can't see anything said while you were in customer mode, and vice versa. When a
+switch happens because you asked for something (not via the explicit command), eisy-ai carries
+over a short summary of what you want so you don't have to repeat yourself — but anything beyond
+that summary is gone once you're on the other side. If you switch with the explicit `/developer`/
+`/customer` command instead, no summary carries over at all — just say what you need once you're
+there.
+
+If a mode isn't enabled on your installation, switching to it will fail with a plain explanation
+rather than silently doing nothing.
+
+---
+
+## 1. For Customers
+
+Everything below is available through ordinary conversation — you describe what you want, and
+eisy-ai figures out which of its capabilities to use. A few behaviors apply everywhere and are
+worth knowing up front:
+
+> **Deletions require a literal "YES."** Deleting a device, scene, folder, routine, variable, or
+> installed plugin never happens on the first ask. eisy-ai previews what would be removed, and
+> only goes through if your very next reply is exactly the word `YES` — "yes," "sure," and "go
+> ahead" don't count. This is deliberate: it's your one safety net against an accidental delete.
+>
+> Several other actions — removing a single device from a scene, running a live scene test,
+> restarting a service, buying or installing a plugin, changing a plugin's settings — also wait
+> for your explicit go-ahead, just without the strict `YES` requirement.
+
+### Checking on and controlling devices
+
+- **"Is the porch light on?" / "What's the temperature in the den?"** — eisy-ai can check the
+  current state of one or more devices in a single question.
+- **"Turn off the kitchen lights." / "Set the thermostat to 68."** — control one or many devices
+  at once: on/off, dimming, mode changes, setting values, or anything else a device supports.
+- **"What can the thermostat actually do?"** — look up everything a specific device or scene
+  supports, including valid ranges and choices for each setting.
+- **"Why did the garage light turn on last night?" / "How often does the back door open?"** —
+  eisy-ai keeps a standing activity log it can check any time, not just when something's broken.
+  It answers simple "what happened" questions as well as aggregate ones (counts, trends,
+  patterns), and if it genuinely can't find an automated cause, it'll say so plainly rather than
+  guess — most likely someone just did it by hand.
+
+### Organizing your devices
+
+- **Rename, enable/disable, move, or delete** a device, scene, or folder.
+- **Folders** are purely organizational — no automation behavior of their own — for when you just
+  want to tidy up your device list.
+- Deleting works directly for Insteon devices. **Z-Wave, Zigbee, and Matter devices are removed
+  through the pairing flow's "exclude" step instead** (see Adding & Removing Devices, below), and
+  a device created by a plugin is removed by uninstalling that plugin.
+
+### Scenes & groups
+
+- **Create a scene** and decide which device is the "controller" (the trigger) and which are
+  "responders" (what reacts) — this is also how two devices get directly cross-linked to each
+  other.
+  - A device can only control one scene at a time. If you try to add an already-controlling
+    device to a new scene, eisy-ai will tell you which scene it's already tied to and ask how
+    you'd like to proceed, rather than silently overriding it.
+- **Remove a member from a scene**, or change how an existing member behaves when the scene
+  activates (dimmer level, fade speed, etc.).
+- **"What happens when I run my 'Movie Night' scene?"** — get a plain explanation of exactly
+  which devices respond and how.
+- **"Why doesn't my scene turn everything off?"** — run a real test: eisy-ai fires an actual "off"
+  command to the group and reports which members responded (only after you agree, since it
+  genuinely switches things off; currently Insteon scenes only).
+
+### Variables
+
+Small counters or on/off-style flags your routines can use as conditions or results.
+
+- List every saved variable and its current value.
+- Create, update, or delete one (deletion follows the standard two-step confirmation).
+
+### Routines & automations
+
+- **Build a new automation, or change an existing one** — pairing conditions (a device's status,
+  a button press, a schedule, sunrise/sunset, another routine's state, a variable, a utility
+  signal) with actions (control devices, wait, repeat, adjust a scene, send a notification,
+  change a variable, control another routine). One thing worth knowing: editing an existing
+  routine rewrites its whole logic rather than patching one piece, so describe the complete
+  behavior you want — eisy-ai reviews the current version first so nothing you didn't ask to
+  change gets dropped.
+- **"What does my 'Away Mode' routine actually do?"** — get a plain-language explanation plus its
+  live status (enabled/disabled, currently running, last/next run time).
+- **Turn a routine on/off, run it immediately, stop it, toggle whether it runs at startup, or
+  delete it.**
+
+### Plugins — extending what eisy-ai can do
+
+Plugins add new device types, specialized computed answers, or extra features eisy-ai doesn't
+have built in. They exist in three states, each with its own listing:
+
+- **Browse the store**, **see what you've already purchased**, and **see what's actually
+  installed and running**.
+- **Buy** or **install** a plugin — in both cases, eisy-ai hands you a link, and you finish the
+  purchase or installation yourself on the web; neither completes inside the chat.
+- **Uninstall** an installed plugin — this one *does* happen directly through the assistant,
+  permanently, with the standard two-step confirmation.
+- **Start, stop, or restart** a plugin's own background service (separate from restarting the
+  whole hub).
+- **Use a plugin's own special features** — eisy-ai can discover what an AI-capable plugin
+  specifically offers and actually use it to answer your question or help build a scene/routine.
+- **View or change a plugin's settings** — API keys, polling frequency, device-specific options,
+  connected-account credentials — only after you've agreed to the specific change. This only
+  applies to plugin-provided features, never to a regular Insteon/Z-Wave/Zigbee/Matter device.
+
+### Adding & removing physical devices (pairing)
+
+- **Adding a device**: eisy-ai first asks whether you have a QR code or setup code. If you do, it
+  scans/enters it directly. If not, it falls back to a protocol-specific flow — Insteon by address
+  or by opening a "linking mode" window (up to 5 minutes, enough for several devices back to
+  back); Z-Wave/Zigbee by opening discovery mode; Matter strictly requires a QR/setup code. X10
+  isn't supported through chat — you'll be walked through pairing it manually instead. Either
+  way, this involves a real physical step (scanning a code, pressing a button) while eisy-ai
+  waits.
+- **Removing a device**: for Z-Wave, you identify the device physically (its own exclude button)
+  rather than naming it in chat; Zigbee and Matter remove immediately on request, no physical
+  step needed (Zigbee removal can occasionally need a manual fix in the web UI if it fails).
+
+### Diagnostics & troubleshooting
+
+Reach for these when something's actually broken — everyday "what's the temperature" questions
+are answered by ordinary device status checks, not these tools.
+
+- **"I turn it on but nothing happens"** — investigates commands from eisy-ai not reaching the
+  device.
+- **"I flipped the switch by hand and eisy-ai never noticed"** — investigates the device's status
+  not making it back.
+- **System health** — which wireless subsystems (Insteon/Z-Wave/Zigbee/Matter) are enabled and
+  connected, firmware/software versions, and whether updates are available.
+- **Core services** — check whether the hub's internal services are running, and start/stop/
+  restart one (only after you agree, since it briefly interrupts it).
+- **"What protocol does this device use?"** — useful context behind the scenes for any
+  protocol-specific question or action.
+- **Run a command on the host computer** — a broad, advanced escape hatch for technical requests
+  nothing else covers. This is a genuinely powerful, unrestricted capability, distinct from
+  everyday smart-home control — eisy-ai will explain what a command does before running anything
+  that changes or restarts something.
+
+### Preferences
+
+- **Aliases** — "when I say 'the lamp,' I mean the one in the office" — nicknames for devices or
+  scenes.
+- **Reminders** — birthdays, anniversaries, or other dated events, repeating annually or one-time,
+  optionally flagged some number of days in advance. There's no "edit" today — changing one means
+  deleting and re-creating it. Also worth knowing: a saved reminder doesn't send a notification
+  anywhere yet — it simply shows as "coming up soon" the next time your preferences are checked.
+
+### Time & location
+
+Exact current time (with time zone), today's sunrise/sunset, and your installation's time zone —
+useful for "what time is it," "is it dark yet," or "in the last 20 minutes" style questions.
+
+### Developer mode
+
+Building your own plugin is a separate, advanced mode — not something you'll need for everyday
+use. See "Switching between modes" above for how to get there, and "For Developers" below for
+what it can do.
+
+---
+
+## 2. For Developers
+
+Developer mode walks you through building a real, working eisy/IoX plugin ("node server") end to
+end, conversationally: researching the target device or service, defining how it shows up as a
+node, generating the actual plugin code, testing it on a real hub, debugging it in VS Code, and
+pushing it to GitHub. Not sure how you got here? See "Switching between modes" above — the same
+`/customer` command (or just asking) takes you back. A few rules apply across the whole workflow:
+
+> **Generating a plugin only ever touches your local disk.** Nothing changes on a real hub until
+> you explicitly install it. Installing, updating a registration, and deleting a registered or
+> installed plugin all require your explicit go-ahead first.
+>
+> **Secrets never get written into generated code.** Any real secret value found in a search
+> query, a fetched page, or generated source causes generation to refuse outright. An OAuth
+> `client_id`/`client_secret` is always a placeholder at generation time — the real values get
+> set afterward, once the plugin is installed.
+>
+> **Two destructive actions share one strict confirm pattern.** Deleting a plugin's registration
+> or an installed plugin both preview first, then require a second call *and* your very next
+> reply being the literal word `YES` before anything is actually removed.
+
+### Getting started
+
+Before anything gets generated, eisy-ai commissions a one-time developer identity for your whole
+workspace — your email, display name, and optional GitHub URL, stamped into every plugin you
+generate under it. It checks whether one's already on file before ever asking you to set one, and
+won't overwrite an existing identity without you asking to change it.
+
+### Researching a device or API
+
+Before building anything, eisy-ai gathers real evidence about the device/service you're
+targeting — this is a hard prerequisite; generation refuses without it.
+
+- **Check the store first.** It always checks whether a plugin covering your need already exists,
+  and recommends stopping there unless you specifically want a custom build anyway.
+- **Search GitHub** for an existing eisy/IoX plugin or a device's own API client to use as
+  reference — any repo whose license isn't MIT/Apache-2.0/BSD gets flagged reference-only, never
+  to be copied from.
+- **Search the web** for a device's official API docs (when a search backend is configured).
+- **Fetch a specific page** you or search found, treated strictly as reference data, never as
+  instructions.
+
+Every source gets accumulated across sessions into your plugin's own history, and license status
+travels with it into the generated `LICENSE.md`.
+
+### Defining the device (the Dynamic Profile)
+
+Before a plugin is generated, you define how the device shows up to eisy/IoX — its properties,
+commands, and UI editors (this is the "Dynamic Profile": nodedefs/editors/linkdefs).
+
+- **Look up the right standard property id** (e.g. `ST`, `CLITEMP`, `CLIHUM`) instead of
+  inventing one — or invent a short, well-formed one if nothing standard fits.
+- **Look up the right unit-of-measure id** for a property's valid range, rather than guessing —
+  one property can even offer more than one unit (e.g. a temperature in both °F and °C).
+- **Validate the whole profile** before generating anything — catches missing ids, dangling
+  references, malformed commands, and several other hard-enforced rules (every non-Controller
+  node needs its own real "status" property; no nodedef may declare the same property twice).
+
+A unit or a named value is never "locked in" at generation time — a profile can even be updated
+live, after the plugin is already running (e.g. to reflect names the customer entered later).
+
+### Generating the plugin
+
+This is the core step: one call produces a complete, working plugin directory — the actual
+Python code (wiring always tool-generated; you only supply the behavior that's specific to your
+device), its registration file, requirements, an install script, README/LICENSE, a starter test
+suite, and a running history of what's changed across sessions.
+
+- If files already exist, the first call just shows you what would conflict and writes nothing —
+  you decide whether to overwrite.
+- Already have a plugin in progress? eisy-ai can list everything you've generated so far and load
+  one back into the conversation to keep iterating, rather than starting from scratch.
+- A smaller, faster "just refresh the generated wiring" option exists too, for picking up a
+  template fix without re-supplying your whole original plugin spec.
+
+### Advanced plugin features
+
+All configured as part of generating your plugin:
+
+- **OAuth** — for a device/service that requires it, eisy-ai wires up the full token lifecycle
+  (your plugin's code never needs to hand-check whether it's authenticated yet); you set the real
+  client id/secret only after install.
+- **Webhooks** — for a plugin that needs to *receive* pushed calls from a third-party service
+  (not just call out to one). Requires your hub to already have remote access configured — eisy-ai
+  can't verify or turn that on for you.
+- **AI tools** — your plugin can declare its own callable capabilities, which show up to
+  customers the same way any other plugin's features do.
+- **Typed configuration fields** — beyond simple text fields, a plugin's settings page can offer
+  real number/boolean types, required fields, repeatable lists, and grouped fields, when the
+  config genuinely needs that structure.
+
+### Local dev environment & VS Code
+
+- **An isolated Python environment** gets set up for your plugin automatically before it's ever
+  installed on a real hub, keeping its dependencies separate from anything else on your machine.
+- **One-click VS Code debugging** — once your plugin is installed, eisy-ai wires up a debug
+  configuration using the exact same credentials the live service uses, so you can attach a
+  debugger directly to it. Safe to redo after every restart.
+
+### Git & GitHub
+
+- **One-time repo setup** — initializes git, writes a `.gitignore` that guarantees your local
+  secrets file never gets committed, makes the first commit, and pushes to a GitHub repo you've
+  already created. Only happens with your explicit go-ahead, and is safe to call again later
+  (it skips anything already done).
+- **Everyday git work** — status, diffs, log, stashing, pulling, ad hoc commits — just happens
+  through an ordinary shell command in your plugin's directory; no special tool needed.
+
+### Installing & testing on a real hub
+
+- **Install** — registers, installs, and starts your plugin on a real hub, reporting each stage
+  separately so a partial failure is never mistaken for a full success. Always requires your
+  go-ahead, since it makes real changes.
+- If the hub already knows about this plugin, eisy-ai won't silently re-register or reinstall over
+  it — you choose between **updating the existing registration in place** or **deleting it and
+  starting fresh**.
+
+### Working with an installed plugin
+
+Once installed, you get the exact same tools a customer-facing conversation would use, so you can
+run through the whole real-world loop yourself:
+
+- See what's installed and its current state.
+- Read and write its configuration — always read first, then send back the same shape, modified.
+- Start, stop, or restart its service.
+- Discover and actually call its own declared AI features.
+- Uninstall it (permanent, with the standard double confirmation).
+- Run shell commands for anything else — inspecting logs, running your test suite inside the
+  plugin's own environment, and so on.
+
+### Hardware & USB devices
+
+For a plugin that needs direct access to a USB or serial device: eisy-ai walks you through taking
+a "before" snapshot of connected devices, asking you to plug yours in, taking an "after" snapshot,
+and automatically identifying the new device from the difference.
