@@ -206,7 +206,7 @@ have built in. They exist in three states, each with its own listing:
 - **Uninstall** an installed plugin — this one *does* happen directly through the assistant,
   permanently, with the standard two-step confirmation.
 - **Start, stop, or restart** a plugin's own background service (separate from restarting the
-  whole hub).
+  whole eisy).
 - **Use a plugin's own special features** — eisy-ai can discover what an AI-capable plugin
   specifically offers and actually use it to answer your question or help build a scene/routine.
 - **View or change a plugin's settings** — API keys, polling frequency, device-specific options,
@@ -237,7 +237,7 @@ are answered by ordinary device status checks, not these tools.
   not making it back.
 - **System health** — which wireless subsystems (Insteon/Z-Wave/Zigbee/Matter) are enabled and
   connected, firmware/software versions, and whether updates are available.
-- **Core services** — check whether the hub's internal services are running, and start/stop/
+- **Core services** — check whether the eisy's internal services are running, and start/stop/
   restart one (only after you agree, since it briefly interrupts it).
 - **"What protocol does this device use?"** — useful context behind the scenes for any
   protocol-specific question or action.
@@ -272,11 +272,11 @@ what it can do.
 
 Developer mode walks you through building a real, working eisy/IoX plugin end to end,
 conversationally: researching the target device or service, defining how it shows up as a node,
-generating the actual plugin code, testing it on a real hub, debugging it in VS Code, and pushing
+generating the actual plugin code, testing it on a real eisy, debugging it in VS Code, and pushing
 it to GitHub. Not sure how you got here? See "Switching between modes" above — the same
 `/customer` command (or just asking) takes you back. A few rules apply across the whole workflow:
 
-> **Generating a plugin only ever touches your local disk.** Nothing changes on a real hub until
+> **Generating a plugin only ever touches your local disk.** Nothing changes on a real eisy until
 > you explicitly install it. Installing, updating a registration, and deleting a registered or
 > installed plugin all require your explicit go-ahead first.
 >
@@ -351,7 +351,7 @@ All configured as part of generating your plugin:
   (your plugin's code never needs to hand-check whether it's authenticated yet); you set the real
   client id/secret only after install.
 - **Webhooks** — for a plugin that needs to *receive* pushed calls from a third-party service
-  (not just call out to one). Requires your hub to already have remote access configured — eisy-ai
+  (not just call out to one). Requires your eisy to already have remote access configured — eisy-ai
   can't verify or turn that on for you.
 - **AI tools** — your plugin can declare its own callable capabilities, which show up to
   customers the same way any other plugin's features do.
@@ -362,7 +362,7 @@ All configured as part of generating your plugin:
 ### Local dev environment & VS Code
 
 - **An isolated Python environment** gets set up for your plugin automatically before it's ever
-  installed on a real hub, keeping its dependencies separate from anything else on your machine.
+  installed on a real eisy, keeping its dependencies separate from anything else on your machine.
 - **One-click VS Code debugging** — once your plugin is installed, eisy-ai wires up a debug
   configuration using the exact same credentials the live service uses, so you can attach a
   debugger directly to it. Safe to redo after every restart.
@@ -376,12 +376,12 @@ All configured as part of generating your plugin:
 - **Everyday git work** — status, diffs, log, stashing, pulling, ad hoc commits — just happens
   through an ordinary shell command in your plugin's directory; no special tool needed.
 
-### Installing & testing on a real hub
+### Installing & testing on a real eisy
 
-- **Install** — registers, installs, and starts your plugin on a real hub, reporting each stage
+- **Install** — registers, installs, and starts your plugin on a real eisy, reporting each stage
   separately so a partial failure is never mistaken for a full success. Always requires your
   go-ahead, since it makes real changes.
-- If the hub already knows about this plugin, eisy-ai won't silently re-register or reinstall over
+- If the eisy already knows about this plugin, eisy-ai won't silently re-register or reinstall over
   it — you choose between **updating the existing registration in place** or **deleting it and
   starting fresh**.
 
