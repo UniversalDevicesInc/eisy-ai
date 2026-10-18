@@ -6,3 +6,5 @@ data/
 *.cert
 *.key
 store_entry.json
+*.lock
+*.pid
