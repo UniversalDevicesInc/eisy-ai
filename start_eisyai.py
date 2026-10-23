@@ -88,6 +88,7 @@ def start_eisyai(runtime_config: dict, polyglot) -> str:
     prompts_file = logs_dir / "nucore.prompt.jsonl"
     plugin_root_directory = Path("/tmp/eisy-ai/generated_plugins")
     plugin_root_directory.mkdir(parents=True, exist_ok=True)
+    #change group permission recursively for the plugin root directory
 
     from unified.run_unified_runtime import _build_parser
     from unified.run_unified_runtime import main as eisyai_main
