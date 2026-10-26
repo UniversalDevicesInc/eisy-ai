@@ -5,6 +5,8 @@ data/
 .iox_env
 *.cert
 *.key
+*.pem
+persist/
 store_entry.json
 *.lock
 *.pid

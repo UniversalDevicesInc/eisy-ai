@@ -117,6 +117,73 @@ def start_eisyai(runtime_config: dict, polyglot) -> str:
 
     args.backend_api_base_url = "unix:///tmp/eisyui-listener"
     args.backend_api_username = "eisyai"
-    args.backend_api_password = "rules" 
+    args.backend_api_password = "rules"
 
     threading.Thread(target=eisyai_main, args=(args, None)).start()
+
+    # MCP (Model Context Protocol) access to nucore-ai's tools -- Phase 1 only,
+    # see design/mcp-server.md (nucore-ai repo). One flag gates both halves:
+    # nucore-ai's MCP server (a Unix socket only, no app-level auth, same
+    # trust model as the websocket thread above) and this repo's own
+    # network-facing proxy (TCP + TLS, zero authentication for Phase 1 --
+    # AllowAllAuthHook, a deliberate stub; see mcp_proxy/auth.py). Default
+    # off: absent or anything other than exactly `true` leaves both threads
+    # unstarted.
+    if runtime_config.get("mcp_server") is True:
+        from unified.provider_clients import resolve_env_placeholder
+        from unified.run_mcp_server import _build_mcp_parser as _build_nucore_mcp_parser
+        from unified.run_mcp_server import main as nucore_mcp_main
+        from mcp_proxy.run_proxy import _build_proxy_parser, main as mcp_proxy_main
+
+        mcp_unix_socket_path = "/tmp/mcp-listener"
+        ssl_certfile, ssl_keyfile = _ensure_ssl_files(data_dir / "ssl")
+
+        # Same resolution run_unified_runtime.main() applies to runtime_config's
+        # own 'search_engine'/'search_engine_api_key' keys -- duplicated here
+        # deliberately since run_mcp_server's CLI takes pre-resolved strings,
+        # not a runtime_config dict.
+        search_engine = runtime_config.get("search_engine")
+        search_engine_api_key = resolve_env_placeholder(runtime_config.get("search_engine_api_key"), dict(os.environ))
+
+        # The proxy's real externally-reachable address -- "0.0.0.0" below is
+        # a *bind* address, not something a client can ever connect to.
+        # "eisy.local" is the one stable, known hostname for this device (it's
+        # also the TLS cert's own CN, see _ensure_ssl_files above). nucore-ai's
+        # MCP server only ever binds a Unix socket and has no way to know this
+        # itself (see build_mcp_protocol_server's public_base_url docstring,
+        # nucore-ai repo) -- without it, get_system_prompt's plain-HTTP
+        # retrieval instructions could only give a relative path, which a
+        # real client has no way to resolve (confirmed directly: one guessed
+        # the hub's own web UI/REST ports instead and got nowhere).
+        mcp_proxy_port = 8260
+        mcp_proxy_public_base_url = f"https://eisy.local:{mcp_proxy_port}"
+
+        nucore_mcp_args = _build_nucore_mcp_parser().parse_args([])
+        nucore_mcp_args.unix_socket_path = mcp_unix_socket_path
+        nucore_mcp_args.plugin_output_root = str(plugin_root_directory)
+        nucore_mcp_args.search_engine = search_engine
+        nucore_mcp_args.search_engine_api_key = search_engine_api_key
+        nucore_mcp_args.preferences_dir = str(preferences_dir)
+        nucore_mcp_args.log_level = args.log_level
+        nucore_mcp_args.log_file = args.log_file
+        nucore_mcp_args.public_base_url = mcp_proxy_public_base_url
+        # Byte-identical to args.* above so run_unified_runtime's
+        # _load_backend_api_cached lru_cache hits the SAME NuCoreInterface
+        # instance for both threads -- no second Unix-socket connection to IoX.
+        nucore_mcp_args.backend_api_classpath = args.backend_api_classpath
+        nucore_mcp_args.backend_api_base_url = args.backend_api_base_url
+        nucore_mcp_args.backend_api_username = args.backend_api_username
+        nucore_mcp_args.backend_api_password = args.backend_api_password
+
+        threading.Thread(target=nucore_mcp_main, args=(nucore_mcp_args, None)).start()
+
+        proxy_args = _build_proxy_parser().parse_args([])
+        proxy_args.host = "0.0.0.0"
+        proxy_args.port = mcp_proxy_port
+        proxy_args.unix_socket_path = mcp_unix_socket_path
+        proxy_args.ssl_certfile = str(ssl_certfile)
+        proxy_args.ssl_keyfile = str(ssl_keyfile)
+        proxy_args.log_level = args.log_level
+        proxy_args.log_file = args.log_file
+
+        threading.Thread(target=mcp_proxy_main, args=(proxy_args,)).start()

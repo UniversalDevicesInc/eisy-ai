@@ -28,6 +28,7 @@ This configuration uses Claude as the LLM provider for both home automation as w
   "max_tool_set_switches_per_turn": 1,
   "search_engine": null,
   "search_engine_api_key": null,
+  "mcp_server": false,
   "nucore_runtime": {
     "unified": {
       "enabled": true,
@@ -73,6 +74,7 @@ This configuration uses Claude as the LLM provider for both home automation as w
   "max_tool_set_switches_per_turn": 1,
   "search_engine": "brave",
   "search_engine_api_key": "${SEARCH_ENGINE_API_KEY}",
+  "mcp_server": false,
   "nucore_runtime": {
     "unified": { "provider": "claude", "model": "...", "...": "..." },
     "plugin_authoring": { "provider": "claude", "model": "...", "...": "..." }
@@ -91,6 +93,7 @@ and `plugin_authoring` (the developer/plugin-authoring tool set). A profile with
 | `max_tool_set_switches_per_turn` | integer | `1` | Caps how many times one user turn may chain from one tool set into the other after a model-driven `switch_to_developer_mode`/`switch_to_customer_mode` call. Exceeding it returns an ordinary `{"error": ...}` tool result, not a crash. |
 | `search_engine` | `"brave"` \| `"tavily"` | *(none)* | Web-search provider for `plugin_authoring`'s `search_web` tool (and `unified`'s, since this is shared by either tool set's discovery tools). Omitting it does **not** disable web search outright: when the resolved provider for a tool set is Claude, Claude's own native `web_search` server tool is used automatically instead, no second API key needed. For any other provider, omitting this means no web search capability at all for that tool set. Setting it explicitly always forces the Brave/Tavily fallback, even on Claude. |
 | `search_engine_api_key` | string | *(none)* | API key for `search_engine`, is a placeholder for your API Key for either `brave` or `tavily`. Required for `search_engine` to actually take effect; `search_engine` with no key behaves the same as neither being set. |
+| `mcp_server` | boolean | `false` | Exposes every tool eisy-ai has (both `unified` and `plugin_authoring`, whichever are `enabled`) to an external [MCP](https://modelcontextprotocol.io/) client over the network, bypassing the normal chat/LLM flow entirely -- useful for an IDE assistant or other MCP-native tool that wants to call eisy-ai's tools directly. Must be the literal boolean `true` to take effect; anything else (including omitting it) leaves it off. **Opens a TLS TCP listener on port 8260 with no application-level authentication at all (Phase 1 of this feature) -- anyone who can reach that port on your network gets the same tool access a logged-in session has, including `run_shell_command` and full device control.** Only enable this on a network you fully trust; see `design/mcp-server.md` in the `nucore-ai` repo for the full design and security tradeoffs. |
 | any other key | -- | -- | Silently ignored -- never an error. This is also how a documentation-only key survives in a file format with no comment syntax; see "Documentation-only keys" below. |
 
 ## Per-profile fields (`nucore_runtime.<name>`)

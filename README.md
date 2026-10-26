@@ -34,6 +34,7 @@ search tool is used automatically.
   "max_tool_set_switches_per_turn": 1,
   "search_engine": null,
   "search_engine_api_key": null,
+  "mcp_server": false,
   "nucore_runtime": {
     "unified": {
       "enabled": true,
@@ -81,6 +82,15 @@ A few fields worth knowing up front:
 | `url` | Point at a self-hosted or proxied endpoint instead of the provider's default. |
 | `search_engine` / `search_engine_api_key` | Only needed for a non-Claude provider, or to force Brave/Tavily search instead of Claude's built-in search. |
 | `max_tool_set_switches_per_turn` | Caps how many times one message can bounce between customer and developer mode automatically — see "Switching between modes" below. |
+| `mcp_server` | Off (`false`) by default. See the warning below before turning it on. |
+
+> **`mcp_server: true` opens a network port with no password.** Turning this on lets an external
+> [MCP](https://modelcontextprotocol.io/) client — an IDE assistant, for example — call eisy-ai's
+> tools directly over the network instead of through ordinary chat. There is currently no login or
+> credential of any kind on that connection: anyone on your LAN who can reach it gets the exact
+> same access a logged-in chat session has, including running commands on your eisy and controlling
+> every device. Only turn this on if you specifically need that external access, and only on a
+> network you trust completely — leave it `false` (or omit it) otherwise, which is the default.
 
 This covers the common case. For the complete field-by-field reference — every option, its
 default, and provider-specific quirks (which fields each provider actually honors, prompt-cache

@@ -10,6 +10,7 @@ README.md \
 eisyai.iox_plugin.json \
 eisyai.py \
 install.sh \
+mcp_proxy \
 profile \
 provider_map.json \
 provider_map.py \

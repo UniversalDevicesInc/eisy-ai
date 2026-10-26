@@ -1,3 +1,6 @@
 udi_interface>=3.0.57
 ioxplugin
-nucore-ai>=3.1.3
+nucore-ai>=3.2.0
+starlette
+uvicorn
+httpx
