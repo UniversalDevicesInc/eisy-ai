@@ -66,11 +66,16 @@ async def test_proxy_rejects_when_auth_hook_denies(upstream_socket):
         async def authenticate(self, request):
             return False
 
-    app = build_proxy_app(unix_socket_path=upstream_socket, auth_hook=_DenyHook())
+    app = build_proxy_app(
+        unix_socket_path=upstream_socket, auth_hook=_DenyHook(), issuer="https://eisy.local:8260"
+    )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://proxy") as client:
         response = await client.get("/mcp")
-    assert response.status_code == 403
+    assert response.status_code == 401
+    assert response.headers["WWW-Authenticate"] == (
+        'Bearer resource_metadata="https://eisy.local:8260/.well-known/oauth-protected-resource"'
+    )
 
 
 class _FakeUpstreamResponse:

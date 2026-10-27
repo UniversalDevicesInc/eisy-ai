@@ -384,7 +384,15 @@ class EisyaiControllerNode(udi_interface.Node):
                 self.setNotices("Eisy AI", "Runtime configuration is not set")
                 return False
             runtime_config = json.loads(runtime_config)
-            model = start_eisyai(runtime_config, self.poly)
+            notice = start_eisyai(runtime_config, self.poly)
+            if notice:
+                self.setNotices("Eisy AI", notice)
+            else:
+                # Clears a prior no-API-key notice once the config is fixed
+                # and this restarts -- Notices persists across restarts
+                # (every mutation saves), so a stale one would otherwise
+                # never go away on its own.
+                self.poly.Notices.delete("Eisy AI")
             return True
 
         except Exception as ex:

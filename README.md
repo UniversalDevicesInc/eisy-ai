@@ -84,18 +84,63 @@ A few fields worth knowing up front:
 | `max_tool_set_switches_per_turn` | Caps how many times one message can bounce between customer and developer mode automatically — see "Switching between modes" below. |
 | `mcp_server` | Off (`false`) by default. See the warning below before turning it on. |
 
-> **`mcp_server: true` opens a network port with no password.** Turning this on lets an external
-> [MCP](https://modelcontextprotocol.io/) client — an IDE assistant, for example — call eisy-ai's
-> tools directly over the network instead of through ordinary chat. There is currently no login or
-> credential of any kind on that connection: anyone on your LAN who can reach it gets the exact
-> same access a logged-in chat session has, including running commands on your eisy and controlling
-> every device. Only turn this on if you specifically need that external access, and only on a
-> network you trust completely — leave it `false` (or omit it) otherwise, which is the default.
+> **`mcp_server: true` opens a network port.** Turning this on lets an external MCP client call
+> eisy-ai's tools directly over the network instead of through ordinary chat — see "Using MCP"
+> below for what that means, what it requires, and how to connect one. Leave this `false` (or
+> omit it) unless you specifically want that, which is the default.
 
 This covers the common case. For the complete field-by-field reference — every option, its
 default, and provider-specific quirks (which fields each provider actually honors, prompt-cache
 behavior, the fabrication-guard retry mechanism, and more) — see `POLYGLOT_CONFIG.md` in this
 same directory.
+
+---
+
+## Using MCP (Model Context Protocol)
+
+[MCP](https://modelcontextprotocol.io/) lets an external client — Claude Desktop, an IDE
+assistant, or any other MCP-capable tool — call eisy-ai's tools directly over the network,
+bypassing ordinary chat entirely. Set `mcp_server: true` in your config (see Configuration above)
+to turn this on.
+
+### Prerequisites
+
+- **`mcp_server: true`** in your config.
+- **Your eisy's own real login.** MCP access requires signing in with the same username/password
+  that already protects this device's web UI and REST API, via a standard OAuth 2.1 flow — there
+  is no unauthenticated access, and no separate "MCP password" to set up.
+- **"Allow Unrestricted ISY Access by Node Server" must be enabled for this node server.** This is
+  a one-time setting in this node server's own configuration screen (not in the JSON config
+  above). MCP's sign-in step needs a connection to the hub that bypasses the normal plugin-to-ISY
+  relay every other eisy-ai feature uses, and that connection is exactly what this permission
+  gates — without it, sign-in can never complete, no matter how many times it's retried. If this
+  is the problem, eisy-ai's own logs will say "ISY access not authorized."
+- **No LLM provider API key is required.** MCP tool access works even with none configured at
+  all — see "If no API key is configured" below for what that means for web chat specifically.
+
+### Connecting a client
+
+Using Claude Desktop as the concrete example (other MCP clients follow the same shape):
+
+1. Add a remote MCP server pointed at your eisy's address, e.g. `https://eisy.local:8260`.
+2. The client handles OAuth discovery and registration automatically and presents a login form —
+   sign in with your eisy's own username and password (see Prerequisites above).
+3. Once signed in, every tool from whichever profiles are enabled in your config (`unified`,
+   `plugin_authoring`, or both) becomes available to that client, the same access a logged-in chat
+   session already has.
+
+### What's deliberately unavailable
+
+Real device and plugin **deletions always come back as a preview only over MCP, never actually
+executed**, regardless of what confirmation is sent — by design, independent of login status. See
+`design/mcp-server.md` in the `nucore-ai` repo for the full design and its threat model.
+
+### If no API key is configured
+
+MCP tool access works fully either way. Web chat and plugin authoring don't — they need an LLM
+provider API key, which MCP itself never uses. With `mcp_server: true` and no key, eisy-ai shows a
+notice that it's running in MCP-only mode; with `mcp_server` off and no key, it shows a notice that
+a key is needed. Either way, adding a key and restarting clears the notice.
 
 ---
 

@@ -46,8 +46,9 @@ async def _stream_upstream_body(upstream_response: httpx.Response) -> AsyncItera
 
 
 class _ProxyApp:
-    def __init__(self, unix_socket_path: str, auth_hook: AuthHook) -> None:
+    def __init__(self, unix_socket_path: str, auth_hook: AuthHook, issuer: str | None = None) -> None:
         self._auth_hook = auth_hook
+        self._issuer = issuer
         transport = httpx.AsyncHTTPTransport(uds=unix_socket_path)
         # base_url's host is never actually resolved (uds= replaces the
         # connection step entirely) -- it only has to be a well-formed URL.
@@ -63,7 +64,18 @@ class _ProxyApp:
         request = Request(scope, receive=receive)
 
         if not await self._auth_hook.authenticate(request):
-            response = Response("forbidden", status_code=403)
+            # 401, not 403, and with a real WWW-Authenticate challenge --
+            # deliberate exception to this module's own "zero changes to
+            # proxy.py's relay logic" promise (design/mcp-server.md,
+            # nucore-ai repo). An MCP client that requires real OAuth 2.1
+            # discovery (Claude Desktop, confirmed directly -- no fallback
+            # to a static bearer header at all) relies on exactly this
+            # challenge to know to start the discovery flow; a bare 403
+            # gives it nothing to act on.
+            headers = {}
+            if self._issuer:
+                headers["WWW-Authenticate"] = f'Bearer resource_metadata="{self._issuer}/.well-known/oauth-protected-resource"'
+            response = Response("unauthorized", status_code=401, headers=headers)
             await response(scope, receive, send)
             return
 
@@ -100,12 +112,15 @@ class _ProxyApp:
         await response(scope, receive, send)
 
 
-def build_proxy_app(*, unix_socket_path: str, auth_hook: AuthHook) -> Starlette:
+def build_proxy_app(*, unix_socket_path: str, auth_hook: AuthHook, issuer: str | None = None) -> Starlette:
     """Mount at the root (not a fixed path): the upstream MCP server's own
     path (``/mcp``) is forwarded through unchanged, so this proxy never
     needs to know or care what path nucore-ai actually serves on. Mount,
     not Route: Route treats a plain function/method endpoint as
     ``func(request) -> response``, the wrong calling convention for a raw
-    ASGI app -- see unified/mcp/server.py's own note on the same pitfall."""
-    app = _ProxyApp(unix_socket_path=unix_socket_path, auth_hook=auth_hook)
+    ASGI app -- see unified/mcp/server.py's own note on the same pitfall.
+    *issuer* (this proxy's own externally-reachable base URL) is only used
+    to build the 401 denial's ``WWW-Authenticate`` challenge -- see
+    _ProxyApp.__call__."""
+    app = _ProxyApp(unix_socket_path=unix_socket_path, auth_hook=auth_hook, issuer=issuer)
     return Starlette(routes=[Mount("/", app=app)])
