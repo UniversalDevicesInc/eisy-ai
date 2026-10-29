@@ -26,7 +26,8 @@ one for plugin authoring).
 Here's a working example using Claude for both modes — replace
 `Replace_with_your_Anthropic_API_Key` with your own key and adjust the model names as needed. You
 don't need to configure anything for web search: when the provider is Claude, its own built-in
-search tool is used automatically.
+search tool is used automatically in either mode, and when customer mode's provider is
+`openai-responses` (see below), OpenAI's own built-in search tool is used automatically there too.
 
 ````json
 ```json
@@ -75,12 +76,12 @@ A few fields worth knowing up front:
 
 | Field | What it does |
 |---|---|
-| `provider` | Which LLM backend that profile calls: `claude`, `openai`, `gemini`, `grok`, or a local `llamacpp` server. |
+| `provider` | Which LLM backend that profile calls: `claude`, `openai`, `openai-responses`, `gemini`, `grok`, or a local `llamacpp` server. See the `openai-responses` note below. |
 | `model` | The exact model id passed to that provider. |
 | `api_key` | Your API key for that provider (not needed for an unauthenticated local `llamacpp` server). |
 | `enabled` | Turns a profile on or off without deleting its settings. At least one profile must stay enabled. |
 | `url` | Point at a self-hosted or proxied endpoint instead of the provider's default. |
-| `search_engine` / `search_engine_api_key` | Only needed for a non-Claude provider, or to force Brave/Tavily search instead of Claude's built-in search. |
+| `search_engine` / `search_engine_api_key` | Only needed for a provider without its own built-in search (every provider except Claude, and except `openai-responses` in customer mode), or to force Brave/Tavily search instead of a provider's built-in search. |
 | `max_tool_set_switches_per_turn` | Caps how many times one message can bounce between customer and developer mode automatically — see "Switching between modes" below. |
 | `mcp_server` | Off (`false`) by default. See the warning below before turning it on. |
 
@@ -88,6 +89,17 @@ A few fields worth knowing up front:
 > eisy-ai's tools directly over the network instead of through ordinary chat — see "Using MCP"
 > below for what that means, what it requires, and how to connect one. Leave this `false` (or
 > omit it) unless you specifically want that, which is the default.
+
+> **`openai-responses` is a second way to use OpenAI, for reasoning-tier models.** Plain `openai`
+> talks to OpenAI's older `/v1/chat/completions` endpoint; `openai-responses` talks to OpenAI's
+> newer `/v1/responses` endpoint instead. It's the same OpenAI account and the same API key as
+> plain `openai` — only the endpoint and request shape differ. The reason it exists: some of
+> OpenAI's reasoning models (the `o`-series and newer reasoning-tier `gpt-5`-family models) refuse
+> to use function-calling tools at all on `/v1/chat/completions`, no matter what settings are
+> tried, which breaks every eisy-ai capability that depends on tool calls. `/v1/responses` is
+> OpenAI's own fix for that. Use plain `openai` normally; switch a profile to `openai-responses`
+> only if you've hit that specific tool-rejection behavior with a reasoning model and want to keep
+> using it anyway.
 
 This covers the common case. For the complete field-by-field reference — every option, its
 default, and provider-specific quirks (which fields each provider actually honors, prompt-cache
@@ -171,6 +183,32 @@ there.
 
 If a mode isn't enabled on your installation, switching to it will fail with a plain explanation
 rather than silently doing nothing.
+
+---
+
+## Managing saved sessions
+
+As long as you're signed in, each mode (customer and developer) keeps its own conversation
+history — and, separately, can hold more than one *named* session, the way browser tabs or
+documents do. Your current session keeps growing as you talk, survives reconnecting, and (on
+installations with persistent session storage turned on) survives a full restart of eisy-ai
+itself. Five commands manage it, each sent as a message containing *only* the command (plus an id
+and/or name where one is needed):
+
+| Command | What it does |
+|---|---|
+| `/sessions` | Lists your saved sessions in the current mode as a table (id, name, description), marking which one is current. |
+| `/new-session` | Starts a fresh, empty session in the current mode. Your previous one isn't lost — it's just no longer the one you're talking in. |
+| `/load-session <id>` | Switches to a saved session by its id (see `/sessions`), replaying its history so you can pick back up where you left off. |
+| `/rename-session <id> <name>` | Gives a saved session a more memorable name than "Session 3". |
+| `/delete-session <id>` | Removes a saved session. Deleting your current session automatically starts a new empty one in its place — you always have at least one. |
+
+Customer and developer mode sessions are entirely separate: `/sessions` only shows (and
+`/new-session`/`/load-session`/etc. only act on) the mode you're currently in.
+
+If a session command replies that session management "isn't enabled on this installation," your
+eisy administrator hasn't turned on persistent session storage — talk to them if you'd like this
+feature.
 
 ---
 
