@@ -1,1 +1,1 @@
-ud_plugin_version="2.1.0"
+ud_plugin_version="2.2.0"

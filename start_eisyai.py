@@ -119,9 +119,9 @@ def start_eisyai(runtime_config: dict, polyglot) -> str | None:
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_file = logs_dir / "eisyai.log"
     prompts_file = logs_dir / "nucore.prompt.jsonl"
-    plugin_root_directory = Path("/tmp/eisy-ai/generated_plugins")
+    #plugin_root_directory = Path("/tmp/eisy-ai/generated_plugins")
+    plugin_root_directory = Path("/home/eisy-ai/generated_plugins")
     plugin_root_directory.mkdir(parents=True, exist_ok=True)
-    #change group permission recursively for the plugin root directory
 
     from unified.run_unified_runtime import _build_parser
     from unified.run_unified_runtime import main as eisyai_main
@@ -146,6 +146,8 @@ def start_eisyai(runtime_config: dict, polyglot) -> str | None:
     args.log_file = str(log_file)
     args.prompt_log_file = str(prompts_file)
     args.plugin_output_root = str(plugin_root_directory)
+    args.old_plugin_output_root= "/tmp/eisy-ai/generated_plugins"
+    #args.old_plugin_output_root= "/home/eisy-ai/generated_plugins"
     
     args.stream = True
 
