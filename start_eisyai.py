@@ -113,6 +113,8 @@ def start_eisyai(runtime_config: dict, polyglot) -> str | None:
     data_dir.mkdir(parents=True, exist_ok=True)
     preferences_dir = data_dir / "prefs"
     preferences_dir.mkdir(parents=True, exist_ok=True)
+    sessions_dir = data_dir / "sessions"
+    sessions_dir.mkdir(parents=True, exist_ok=True)
     logs_dir = home_directory / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_file = logs_dir / "eisyai.log"
@@ -128,6 +130,7 @@ def start_eisyai(runtime_config: dict, polyglot) -> str | None:
     args.backend_api_classpath = "iox.IoXWrapper"
     args.runtime_config = runtime_config
     args.preferences_dir = str(preferences_dir)
+    args.session_persist_dir = str(sessions_dir)
 #### Use these for TCP/WebSocket connections instead of Unix socket
 #    ssl_certfile, ssl_keyfile = _ensure_ssl_files(home_directory / "data" / "ssl")
 #    args.websocket_port = 8000
