@@ -81,7 +81,7 @@ A few fields worth knowing up front:
 | `api_key` | Your API key for that provider (not needed for an unauthenticated local `llamacpp` server). |
 | `enabled` | Turns a profile on or off without deleting its settings. At least one profile must stay enabled. |
 | `url` | Point at a self-hosted or proxied endpoint instead of the provider's default. |
-| `search_engine` / `search_engine_api_key` | Only needed for a provider without its own built-in search (every provider except Claude, and except `openai-responses` in customer mode), or to force Brave/Tavily search instead of a provider's built-in search. |
+| `search_engine` / `search_engine_api_key` | Only needed for a provider without its own built-in search (every provider except Claude, and except `openai-responses` in customer mode). Customer mode has no override for any provider -- these have no effect there when the provider is Claude or `openai-responses`, and no provider without built-in search gets a fallback there either. In developer mode only, setting these explicitly forces Brave/Tavily search instead of Claude's own built-in search. |
 | `max_tool_set_switches_per_turn` | Caps how many times one message can bounce between customer and developer mode automatically — see "Switching between modes" below. |
 | `mcp_server` | Off (`false`) by default. See the warning below before turning it on. |
 
@@ -192,7 +192,7 @@ As long as you're signed in, each mode (customer and developer) keeps its own co
 history — and, separately, can hold more than one *named* session, the way browser tabs or
 documents do. Your current session keeps growing as you talk, survives reconnecting, and (on
 installations with persistent session storage turned on) survives a full restart of eisy-ai
-itself. Five commands manage it, each sent as a message containing *only* the command (plus an id
+itself. Seven commands manage it, each sent as a message containing *only* the command (plus an id
 and/or name where one is needed):
 
 | Command | What it does |
@@ -202,6 +202,8 @@ and/or name where one is needed):
 | `/load-session <id>` | Switches to a saved session by its id (see `/sessions`), replaying its history so you can pick back up where you left off. |
 | `/rename-session <id> <name>` | Gives a saved session a more memorable name than "Session 3". |
 | `/delete-session <id>` | Removes a saved session. Deleting your current session automatically starts a new empty one in its place — you always have at least one. |
+| `/delete-all-sessions` | Removes every saved session in the current mode at once, then starts a fresh empty one in its place — you always have at least one. |
+| `/compact-session` | Summarizes your current session's older turns right away, to free up room, even if it isn't full yet. |
 
 Customer and developer mode sessions are entirely separate: `/sessions` only shows (and
 `/new-session`/`/load-session`/etc. only act on) the mode you're currently in.
@@ -209,6 +211,11 @@ Customer and developer mode sessions are entirely separate: `/sessions` only sho
 If a session command replies that session management "isn't enabled on this installation," your
 eisy administrator hasn't turned on persistent session storage — talk to them if you'd like this
 feature.
+
+As a long conversation grows, you may see an *italic* note like *"Session history is at 70% of
+its budget..."* -- this is automatic, just letting you know; you can compact right away yourself
+with `/compact-session` any time, or just keep going and it'll summarize the older turns for you
+once it's actually full.
 
 ---
 
