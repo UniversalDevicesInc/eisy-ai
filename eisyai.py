@@ -3,7 +3,7 @@
 # Main routine for IoX Plugin. 
 # Do NOT Modify 
 
-import udi_interface, os, sys, json, time,shutil
+import udi_interface, os, sys, json, time,shutil,grp
 import version
 from ioxplugin import Plugin
 
@@ -11,8 +11,25 @@ PLUGIN_FILE_NAME = 'eisyai.iox_plugin.json'
 PLUGIN_FILE_NAME_DEST = f"{os.getcwd()}/{PLUGIN_FILE_NAME}"
 DATA_PATH = f"{os.getcwd()}/data"
 PLUGIN_FILE_NAME_SRC = f"{DATA_PATH}/{PLUGIN_FILE_NAME}"
+VENV_PATH = f"{os.getcwd()}/.venv"
+PERSIST_PATH = f"{os.getcwd()}/persist"
 
 LOGGER = udi_interface.LOGGER
+
+def securePersistDir():
+    try:
+        os.makedirs(PERSIST_PATH, exist_ok=True)
+        uid = os.getuid()
+        gid = grp.getgrnam('polyglot').gr_gid
+        os.chown(PERSIST_PATH, uid, gid)
+        os.chmod(PERSIST_PATH, 0o660)
+        for root, dirs, files in os.walk(PERSIST_PATH):
+            for name in dirs + files:
+                path = os.path.join(root, name)
+                os.chown(path, uid, gid)
+                os.chmod(path, 0o660)
+    except Exception as ex:
+        LOGGER.error(str(ex))
 
 def configurePluginFile():
    if not os.path.exists(PLUGIN_FILE_NAME):
@@ -42,6 +59,8 @@ if __name__ == '__main__':
             from EisyaiControllerNode import EisyaiControllerNode
             controller = EisyaiControllerNode(polyglot, plugin)
             polyglot.ready()
+            if not os.path.exists(VENV_PATH):
+                securePersistDir()
             polyglot.runForever()
     
     except (KeyboardInterrupt, SystemExit):
