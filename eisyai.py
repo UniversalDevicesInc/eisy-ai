@@ -22,12 +22,12 @@ def securePersistDir():
         uid = os.getuid()
         gid = grp.getgrnam('polyglot').gr_gid
         os.chown(PERSIST_PATH, uid, gid)
-        os.chmod(PERSIST_PATH, 0o660)
+        os.chmod(PERSIST_PATH, 0o770)
         for root, dirs, files in os.walk(PERSIST_PATH):
             for name in dirs + files:
                 path = os.path.join(root, name)
                 os.chown(path, uid, gid)
-                os.chmod(path, 0o660)
+                os.chmod(path, 0o770)
     except Exception as ex:
         LOGGER.error(str(ex))
 
