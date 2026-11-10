@@ -476,6 +476,17 @@ All configured as part of generating your plugin:
 - **Everyday git work** — status, diffs, log, stashing, pulling, ad hoc commits — just happens
   through an ordinary shell command in your plugin's directory; no special tool needed.
 
+### Packaging for the plugin store
+
+- **Builds a ready-to-share archive** of your plugin — the code, profile, README, license,
+  requirements, and install script — named after your plugin and its version. This is just the
+  packaging step; actually submitting it to the store is still a manual step you'll do yourself.
+- **Never includes anything it shouldn't** — your local secrets file, certificates, debug
+  configuration, test files, persisted/session data, and any other dev-only clutter are always
+  left out automatically. If anything in your plugin's files looks like a real secret value,
+  packaging refuses outright rather than risk shipping it.
+- Safe to redo any time — a new archive always replaces the old one.
+
 ### Installing & testing on a real eisy
 
 - **Install** — registers, installs, and starts your plugin on a real eisy, reporting each stage
