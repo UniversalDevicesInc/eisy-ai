@@ -3,29 +3,22 @@ from pathlib import Path
 import re
 
 import udi_interface, os, shutil, sys, json, time, threading
-from udi_interface import OAuth
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
-from ioxplugin import Plugin, OAuthService
 from start_eisyai import start_eisyai
 
 DATA_PATH='./data'
-from EisyAINode import EisyAINode
 class EisyaiControllerNode(udi_interface.Node):
     id = 'eisyaicontroll'
     """This is a list of properties that were defined in the nodedef"""
     drivers = [{'driver': 'ST', 'value': 0, 'uom': 25, 'name': 'Status'}]
-    #children = [{'node_class': 'EisyAINode', 'id': 'eisyai', 'name':
-    #    'Eisy AI', 'parent': 'eisyaicontroll'}]
     children = []
 
-    def __init__(self, polyglot, plugin, controller='eisyaicontroll',
+    def __init__(self, polyglot, controller='eisyaicontroll',
         address='eisyaicontroll', name='eisy-ai'):
         super().__init__(polyglot, controller, address, name)
-        self.plugin = plugin
         self.Parameters = Custom(polyglot, 'customparams')
         self.poly.addNode(self, conn_status='ST')
-        self.oauthService = None
         self.poly.subscribe(polyglot.START, self.__start, address)
         self.poly.subscribe(polyglot.CUSTOMPARAMS, self.parameterHandler)
         self.poly.subscribe(polyglot.POLL, self.__poll)
@@ -39,7 +32,6 @@ class EisyaiControllerNode(udi_interface.Node):
         self.poly.subscribe(polyglot.DISCOVER, self.discover)
         self.poly.subscribe(polyglot.BONJOUR, self.__bonjourHandler)
         self.configDone = threading.Condition()
-        self.__initOAuth()
         self.configDoneAlready = False
 
     def getUOM(self, driver: str):
@@ -51,11 +43,6 @@ class EisyaiControllerNode(udi_interface.Node):
         except Exception as ex:
             return None
 
-
-    def __initOAuth(self):
-        if self.plugin and self.plugin.meta and self.plugin.meta.getEnableOAUTH2():
-            self.oauthService = OAuthService(self.polyglot)
-            self.poly.subscribe(polyglot.OAUTH, self.__oauthHandler)
 
     def __configHandler(self, param):
         try:
@@ -124,16 +111,6 @@ class EisyaiControllerNode(udi_interface.Node):
             config = {}
             config['nodes'] = []
 
-        if self.plugin.areNodesStatic():
-            for child in self.children:
-                try:
-                    config['nodes'].append({'nodeDefId': child['id'], 'address':
-                    child['id'], 'name': child['name'],
-                    'primaryNode': child['parent']})
-                except Exception as ex:
-                    LOGGER.error(str(ex))
-                    return
-
         for node in config['nodes']:
             if node['nodeDefId'] == self.id:
                 continue
@@ -148,28 +125,7 @@ class EisyaiControllerNode(udi_interface.Node):
         return None
 
     def __addNodeFromConfig(self, node_info) ->bool:
-        if node_info is None:
-            LOGGER.error('node cannot be null')
-            return False
-        try:
-            node_class = self.__getNodeClass(node_info['nodeDefId'])
-            if node_class == None:
-                return False 
-            node_address=self.getNodeAddress(node_info['nodeDefId'])
-            cls = globals()[node_class]
-            node = cls(self.poly, self.plugin, node_info['primaryNode'], node_address, node_info['name'])
-            if node is None:
-                LOGGER.error(f'invalid noddef id ...')
-                return False
-            else:
-                node_r = self.poly.addNode(node)
-                if node_r:
-                    return True
-                LOGGER.error("failed adding node ... ") 
-                return False
-        except Exception as ex:
-            LOGGER.error(str(ex))
-            return False
+        return False
 
     def __addNodeDoneHandler(self, node):
         try:
@@ -192,44 +148,14 @@ class EisyaiControllerNode(udi_interface.Node):
             return False
 
     def __configDoneHandler(self):
-        rc = False
-        if self.oauthService:
-            # First check if user has authenticated
-            try:
-                self.oauthService.getAccessToken()
-                # If getAccessToken did raise an exception, then proceed with device discovery
-                rc = self.processConfigDone()
-
-            except ValueError as err:
-                LOGGER.warning('Access token is not yet available. Please authenticate.')
-                self.polyglot.Notices['auth'] = 'Please initiate authentication using the Authenticate Buttion'
-                return False
+        rc = self.processConfigDone()
         with self.configDone:
             self.configDoneAlready = True
             self.configDone.notifyAll()
         return rc
 
     def __customNSHandler(self, key, data):
-        if key == 'oauth':
-            # This provides the oAuth config (key='oauth') and saved oAuth tokens (key='oauthTokens))
-            if not self.oauthService:
-                return 
-            try:
-                self.oauthService.customNsHandler(key, data)
-            except Exception as ex:
-                LOGGER.error(ex)
-        else:
-            self.customParamHandler(key, data)
-
-    def __oauthHandler(self, token):
-        if not self.oauthService:
-            return 
-        # This provides the oAuth config (key='oauth') and saved oAuth tokens (key='oauthTokens))
-        try:
-            self.oauthService.oauthHandler(token)
-        except Exception as ex:
-            LOGGER.error(ex)
-
+        self.customParamHandler(key, data)
 
     def __updateStatus(self, value, force: bool):
         return self.setDriver("ST", value, 2, force)
@@ -302,19 +228,6 @@ class EisyaiControllerNode(udi_interface.Node):
         nodeInfo['nodeDefId']=nodeDefId
         return self.__addNodeFromConfig(nodeInfo)
 
-    #####################
-    ###### OAUTH ########
-    #####################
-
-    def callOAuthApi(self, method='GET', url=None, params=None, body=None)->bool:
-        """
-        Use this method to call an OAUTH protected URL
-        """
-        if not self.oauthService:
-            return False
-        return self.oauthService(method, url, params, body)
-
-    
     #############################
     ###### CUSTOM PARAMS ########
     #############################
@@ -485,7 +398,6 @@ class EisyaiControllerNode(udi_interface.Node):
         """
         " This method is called when adding a node to the system is completed successfully. Make sure you use isinstance
         " to ensure it's your node and then do any additional processing necessary.
-        " oauth
         """
         try:
             ###You can store your nodes in a dictionary for mapping or otherwise such as

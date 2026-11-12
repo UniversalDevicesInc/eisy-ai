@@ -5,7 +5,6 @@
 
 import udi_interface, os, sys, json, time,shutil,grp
 import version
-from ioxplugin import Plugin
 
 PLUGIN_FILE_NAME = 'eisyai.iox_plugin.json'
 PLUGIN_FILE_NAME_DEST = f"{os.getcwd()}/{PLUGIN_FILE_NAME}"
@@ -53,11 +52,8 @@ if __name__ == '__main__':
             polyglot.Notices['config']=f"{PLUGIN_FILE_NAME} does not exist. Uplaod it using Configuration tab Zip File Upload then Restart ..."
         else:
             polyglot.Notices.clear()
-            plugin = Plugin(PLUGIN_FILE_NAME)
-#            plugin.toIoX()
-#            plugin.generateCode(path='./')
             from EisyaiControllerNode import EisyaiControllerNode
-            controller = EisyaiControllerNode(polyglot, plugin)
+            controller = EisyaiControllerNode(polyglot)
             polyglot.ready()
             if not os.path.exists(VENV_PATH):
                 securePersistDir()
