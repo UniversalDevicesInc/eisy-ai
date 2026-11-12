@@ -1,5 +1,5 @@
 udi_interface>=3.4.8
-nucore-ai>=3.5.0
+nucore-ai>=3.6.0
 starlette
 uvicorn
 httpx
