@@ -469,6 +469,15 @@ All configured as part of generating your plugin:
 
 ### Git & GitHub
 
+- **GitHub access setup** — configures eisy's SSH access to your GitHub repository if it isn't
+  already working, so the push below succeeds. By default it creates a key dedicated to that one
+  repository (a GitHub *deploy key*); an account-wide key is offered as the alternative. It does
+  everything it can itself — generating the key, trusting GitHub's host key only after verifying
+  its fingerprint, and testing the connection — and hands you the public key with step-by-step
+  instructions for the one thing it can't do: adding that key on GitHub.com. Then ask again and
+  it verifies. You must be signed in, and the email of your GitHub account must match the email
+  you're signed in with, otherwise it stops and tells you how to fix it. It never creates the
+  repository or uploads the key for you, and only runs with your explicit go-ahead.
 - **One-time repo setup** — initializes git, writes a `.gitignore` that guarantees your local
   secrets file never gets committed, makes the first commit, and pushes to a GitHub repo you've
   already created. Only happens with your explicit go-ahead, and is safe to call again later
