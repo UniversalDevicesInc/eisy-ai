@@ -121,8 +121,8 @@ to turn this on.
 - **Your eisy's own real login.** MCP access requires signing in with the same username/password
   that already protects this device's web UI and REST API, via a standard OAuth 2.1 flow — there
   is no unauthenticated access, and no separate "MCP password" to set up.
-- **"Allow Unrestricted ISY Access by Node Server" must be enabled for this node server.** This is
-  a one-time setting in this node server's own configuration screen (not in the JSON config
+- **"Allow API Access" must be enabled for this plugin.** This is
+  a one-time setting in this plugin's own configuration screen (not in the JSON config
   above). MCP's sign-in step needs a connection to the hub that bypasses the normal plugin-to-ISY
   relay every other eisy-ai feature uses, and that connection is exactly what this permission
   gates — without it, sign-in can never complete, no matter how many times it's retried. If this
@@ -134,7 +134,7 @@ to turn this on.
 
 Using Claude Desktop as the concrete example (other MCP clients follow the same shape):
 
-1. Add a remote MCP server pointed at your eisy's address, e.g. `https://eisy.local:8260`.
+1. Add a remote MCP server pointed at your eisy's address, e.g. `https://eisy.local:8260/mcp`.
 2. The client handles OAuth discovery and registration automatically and presents a login form —
    sign in with your eisy's own username and password (see Prerequisites above).
 3. Once signed in, every tool from whichever profiles are enabled in your config (`unified`,

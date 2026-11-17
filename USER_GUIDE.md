@@ -19,6 +19,13 @@ reference, see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md).
    - [2.3 Modes: Customer vs. Developer](#23-modes-customer-vs-developer)
    - [2.4 Customer mode](#24-customer-mode)
    - [2.5 Developer mode](#25-developer-mode)
+3. [Using MCP (Model Context Protocol)](#3-using-mcp-model-context-protocol)
+   - [3.1 What MCP is and when to use it](#31-what-mcp-is-and-when-to-use-it)
+   - [3.2 Prerequisites](#32-prerequisites)
+   - [3.3 Turn it on](#33-turn-it-on)
+   - [3.4 Connect a client](#34-connect-a-client)
+   - [3.5 What's deliberately unavailable](#35-whats-deliberately-unavailable)
+   - [3.6 Troubleshooting](#36-troubleshooting)
 
 ---
 
@@ -97,7 +104,10 @@ llama.cpp-compatible server), so have that provider's API key ready before you s
 
 3. Click on the `Save Changes` button, then restart the eisy-ai plugin from eisy-ui for the new configuration to take effect.
 
-> **No API key configured?** eisy-ai will show a plain notice that web chat and plugin authoring need a key before they'll work. Add one and restart to clear it.
+   The `"mcp_server": false` line turns off network access for outside MCP clients. Leave it
+   `false` unless you specifically want that — see [Using MCP](#3-using-mcp-model-context-protocol).
+
+> **No API key configured?** eisy-ai will show a plain notice that web chat and plugin authoring need a key before they'll work. Add one and restart to clear it. (If you only intend to use eisy-ai through [MCP](#3-using-mcp-model-context-protocol), you don't need a key.)
 
 ### 1.3 Open eisy-ai
 
@@ -468,3 +478,70 @@ replaces the old one. Actually submitting the archive to the plugin store is sti
 you do yourself.
 
 > **Remember: submitting to the store requires being a vetted developer.** As noted under [Navigating the Development tab](#navigating-the-development-tab), you can package and test your plugin locally without any special status, but moving it from Local Plugins to **My Published Plugins** requires that vetting. If you haven't gone through that yet, contact us at  [universal-devices.com/my-tickets](https://www.universal-devices.com/my-tickets) first.
+---
+
+## 3. Using MCP (Model Context Protocol)
+
+### 3.1 What MCP is and when to use it
+
+[MCP](https://modelcontextprotocol.io/) is a standard way for outside AI tools — Claude Desktop,
+an IDE assistant, or any other MCP-capable client — to call eisy-ai's tools directly, over the
+network, **without going through eisy-ai's chat window or its LLM at all**. The client's own AI
+does the thinking; eisy-ai simply provides the tools (device control, status, routines, plugin
+authoring, and so on).
+
+Use it if you'd rather drive your eisy from a tool you already work in. If you just want to chat
+with eisy-ai in eisy-ui, you don't need MCP, and it stays off by default.
+
+### 3.2 Prerequisites
+
+- **`mcp_server` set to `true`** in eisy-ai's configuration (see [3.3](#33-turn-it-on)).
+- **Your eisy's own username and password.** MCP clients sign in with the same credentials that
+  already protect eisy's web UI and REST API, using a standard OAuth 2.1 login. There is no
+  unauthenticated access and no separate "MCP password" to create.
+- **"Allow API Access" enabled for the eisy-ai plugin.** This is a one-time setting on eisy-ai's
+  own configuration screen in eisy-ui (it is *not* part of the JSON configuration). MCP's sign-in
+  needs a direct connection to the eisy that bypasses the normal plugin relay, and this
+  permission is what allows it. Without it, sign-in can never complete no matter how many times
+  you retry; eisy-ai's log will say **"ISY access not authorized."**
+- **No LLM API key is needed.** MCP tool access works even if you haven't configured one.
+
+### 3.3 Turn it on
+
+1. Open eisy-ai's **Configuration** tab (as in [1.2](#12-configure-eisy-ai)) and change
+   `"mcp_server": false` to `"mcp_server": true`. It must be the literal value `true`; anything
+   else, or leaving it out, keeps MCP off.
+2. Enable **Allow API Access** for eisy-ai on that same screen.
+3. Click **Save Changes**, then restart the eisy-ai plugin.
+
+> **Turning this on opens a network port (8260) on your eisy.** It's protected by your eisy login,
+> but once a client signs in it gets the same tool access a logged-in chat session has —
+> including running commands on the host and full device control. Only connect clients you trust.
+
+### 3.4 Connect a client
+
+Claude Desktop is used as the example; other MCP clients follow the same pattern.
+
+1. Add a **remote MCP server** pointing at your eisy, for example
+   `https://eisy.local:8260/mcp`.
+2. The client discovers and registers itself automatically, then shows a login form. Sign in with
+   your eisy's username and password.
+3. Once signed in, every tool from the profiles you have enabled (`unified`, `plugin_authoring`,
+   or both) is available to that client.
+
+Your eisy uses its own TLS certificate, so a client may warn about it the first time you connect.
+
+### 3.5 What's deliberately unavailable
+
+Over MCP, **deleting a device or a plugin only ever returns a preview — it is never actually
+carried out**, no matter what confirmation the client sends. If you really want to delete
+something, do it in eisy-ui or through eisy-ai's own chat, which asks you to confirm.
+
+### 3.6 Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| The client can't connect at all | `mcp_server` isn't exactly `true`, or you haven't restarted eisy-ai since changing it. |
+| The login form appears but sign-in never completes; the log says "ISY access not authorized" | **Allow API Access** isn't enabled for the eisy-ai plugin (see [3.2](#32-prerequisites)). |
+| Login is rejected | Use your eisy's own username and password, the same ones as eisy-ui. |
+| eisy-ai's chat shows a notice about running in "MCP-only mode" | Expected: `mcp_server` is on but no LLM API key is configured. MCP works fully; add a key and restart if you also want web chat and plugin authoring. |
