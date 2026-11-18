@@ -78,7 +78,6 @@ llama.cpp-compatible server), so have that provider's API key ready before you s
          "model": "claude-haiku-5-5",
          "api_key": "Replace_with_your_Anthropic_API_Key",
          "stream": true,
-         "max_turns": 20,
          "max_tokens": 64000,
          "max_iterations": 20
        },
@@ -88,7 +87,6 @@ llama.cpp-compatible server), so have that provider's API key ready before you s
          "model": "claude-sonnet-5-5",
          "api_key": "Replace_with_your_Anthropic_API_Key",
          "stream": true,
-         "max_turns": 20,
          "max_tokens": 64000,
          "max_iterations": 50
        }
@@ -170,7 +168,7 @@ As a long conversation grows, you may see an automatic note like *"Session histo
 its budget..."* — you can run `/compact-session` right away, or just keep going; it will
 summarize older turns for you once it's actually full.
 
-> **How much history a session holds before compacting is configurable.** Each profile's `history_token_budget` setting (see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md)) controls this — it's a soft token budget, independent of the turn-count cap. A larger budget means a session can run longer before eisy-ai needs to compact it, but it also means every turn later in that session carries more history along with it, which costs more per turn as the session grows.You set this per profile (`unified`/`plugin_authoring`) in your own configuration, so you can give customer mode and developer mode different compaction behavior if you want.
+> **How much history a session holds before compacting is configurable.** Each profile's `history_token_budget` setting (see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md)) controls this — it's the only limit on how much history is carried along (there is no cap on the number of turns). When a session grows past the budget, eisy-ai summarizes the older turns and keeps the most recent ones that fit in about half the budget, so it won't need to compact again for a while. A larger budget means a session can run longer before eisy-ai needs to compact it, but it also means every turn later in that session carries more history along with it, which costs more per turn as the session grows. Make the budget at least as big as one typical turn -- developer-mode turns that generate or read plugin files can run 30,000-70,000 tokens, and a budget smaller than that makes eisy-ai summarize on nearly every turn. You set this per profile (`unified`/`plugin_authoring`) in your own configuration, so you can give customer mode and developer mode different compaction behavior if you want.
 
 ### 2.3 Modes: Customer vs. Developer
 
