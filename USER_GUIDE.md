@@ -158,6 +158,7 @@ needed):
 | `/delete-session <id>` | Removes a saved session (starts a fresh one in its place). |
 | `/delete-all-sessions` | Removes every saved session in the current mode, then starts fresh. |
 | `/compact-session` | Summarizes older turns right away to free up room. |
+| `/session-stats` | Shows how full the session's context is, split by system prompt, tools and history, plus recent token usage. |
 
 Customer and developer mode sessions are entirely separate — `/sessions` and the other commands
 only ever act on whichever mode you're currently in. If a session command says session
@@ -166,9 +167,96 @@ configuration (see [1.2 Configure eisy-ai](#12-configure-eisy-ai)).
 
 As a long conversation grows, you may see an automatic note like *"Session history is at 70% of
 its budget..."* — you can run `/compact-session` right away, or just keep going; it will
-summarize older turns for you once it's actually full.
+summarize older turns for you once it's actually full. Use `/session-stats` (below) to see how full a session is.
 
-> **How much history a session holds before compacting is configurable.** Each profile's `history_token_budget` setting (see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md)) controls this — it's the only limit on how much history is carried along (there is no cap on the number of turns). When a session grows past the budget, eisy-ai summarizes the older turns and keeps the most recent ones that fit in about half the budget, so it won't need to compact again for a while. A larger budget means a session can run longer before eisy-ai needs to compact it, but it also means every turn later in that session carries more history along with it, which costs more per turn as the session grows. Make the budget at least as big as one typical turn -- developer-mode turns that generate or read plugin files can run 30,000-70,000 tokens, and a budget smaller than that makes eisy-ai summarize on nearly every turn. You set this per profile (`unified`/`plugin_authoring`) in your own configuration, so you can give customer mode and developer mode different compaction behavior if you want.
+> **How much history a session holds before compacting is configurable.** Each profile's `history_token_budget` setting (see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md)) controls this — it's the only limit on how much history is carried along (there is no cap on the number of turns). When a session grows past the budget, with Claude, eisy-ai has the model summarize the whole conversation -- including what the tools showed it -- and continues from that summary, so it won't need to compact again for a while. With other models it summarizes the older turns and keeps the most recent ones that fit in about half the budget. A larger budget means a session can run longer before eisy-ai needs to compact it, but it also means every turn later in that session carries more history along with it, which costs more per turn as the session grows. Make the budget at least as big as one typical turn -- developer-mode turns that generate or read plugin files can run 30,000-70,000 tokens, and a budget smaller than that makes eisy-ai summarize on nearly every turn. You set this per profile (`unified`/`plugin_authoring`) in your own configuration, so you can give customer mode and developer mode different compaction behavior if you want.
+
+#### Seeing how full a session is: `/session-stats`
+
+Send `/session-stats` (as a message by itself) any time to see where a session's context is going
+and what it has cost so far. It never calls the AI model, so it is instant and free, and it only
+describes the session you are currently in (customer and developer sessions are separate).
+Like the other session commands, it needs persistent session storage to be turned on.
+
+Example reply (abridged):
+
+```
+Session stats (claude-sonnet-5)
+
+Context for the next request: ~72,963 tokens of 1,000,000 (7%) -- calibrated to the last request
+History: ~25,000 of its 120,000-token budget (21%)
+Reply reserve (max_tokens): 32,000
+
+| Part                              | Tokens | Share |
+| system section 1                  | 21,463 |   29% |
+| tools (60)                        | 26,500 |   36% |
+| history: compacted summary        |  5,000 |    7% |
+| history: conversation text        |  9,000 |   12% |
+| history: tool calls and results   | 11,000 |   15% |
+
+Last request: 75,920 in (75,328 cached read, 590 cache write, 2 uncached; 99% hit), 139 out
+Session totals: 20 requests, 1,725,680 input (97% read from cache), 56,240 written 1h / 0 written 5m, 16,513 output, ~$0.72
+Compactions: 1 recorded; latest (fork) ~338,974 -> ~5,057 tokens
+(then a small table of the last five requests)
+```
+
+How to read it:
+
+- **Context for the next request** -- roughly how many tokens the AI model would read if you sent
+  another message right now, and what share of its context window that is. The window comes from
+  a built-in table of well-known models; for any other model the "of N" part is left out unless
+  you set `context_window` on its profile (see [POLYGLOT_CONFIG.md](POLYGLOT_CONFIG.md)).
+  *"calibrated"* means the parts below were scaled so they add up to the token count the provider
+  reported for the last real request, so the total is trustworthy. *"estimated"* means there was
+  no comparable request yet (a new session, or a compaction just happened), so every number is a
+  rough estimate (about 3 characters per token), good for proportions but not exact.
+- **History** -- the conversation history against the profile's `history_token_budget`. When this
+  reaches 100% the session is compacted automatically (or sooner with `/compact-session`).
+- **Reply reserve** -- the profile's `max_tokens`, the room set aside for the model's answer.
+- **The parts table** -- where the context goes:
+  - *system section N* -- the instructions eisy-ai sends with every request. In customer mode
+    these are separate blocks (the static rules and device database, the routines database, and
+    a small volatile block with the time and your preferences); developer mode has one block.
+    Blocks are listed separately because each is cached on its own, and a change to one only
+    re-reads what comes after it.
+  - *tools (N)* -- the definitions of the actions the model may take. Identical on every request.
+  - *history: compacted summary* -- what earlier compactions condensed older turns into.
+  - *history: conversation text* -- the plain questions and answers kept in full.
+  - *history: tool calls and results* -- what the model asked eisy-ai to do and what came back
+    (file contents, device lists, command output). This is usually what grows fastest in developer
+    mode.
+- **Last request** -- the provider's own numbers for the most recent model call: how many tokens
+  went in, how many of them were served from the provider's prompt cache (cheap, fast) versus
+  written to it (costs extra, once) versus processed fresh, and the resulting cache-hit
+  percentage. A healthy session is mostly cache reads.
+- **Session totals** -- the same figures added up over every model call this session has made
+  (including the summarizing calls compaction makes), plus an estimated cost in US dollars. The
+  cost appears only for models whose price eisy-ai knows; if only some calls could be priced it
+  says so. These totals are saved with the session, so they survive reconnecting and restarting.
+- **Compactions** -- how many times the session has been compacted and the size before and after
+  the latest one. The kind is `fork` (the model summarized the live conversation, Claude),
+  `summary` (older turns summarized separately, other models) or `truncated` (the summary failed,
+  so the oldest turns were dropped).
+- **Mid-turn over-budget events** -- appears only if a single request ran so long (many tool
+  rounds) that the conversation passed twice the history budget before the turn finished. This is
+  currently observation only: nothing is compacted mid-turn, but a repeat count tells you the
+  profile's budget may be too small for the way you work.
+- **Last five requests** -- one row per model call (time in UTC, kind, tokens in, cached reads,
+  cache writes, tokens out). `compaction fork` rows are summarizing calls.
+
+What to do with it:
+
+- A *tools* or *system* share that dominates, with a small history, is normal -- that part is
+  cached and costs little after the first request.
+- A low cache-hit percentage right after a long pause, a restart, or a change to the system
+  blocks is normal for one request. If it stays low turn after turn, something is invalidating the
+  cache; the table above shows which part is large.
+- Growing *history: tool calls and results*: run `/compact-session`, start a `/new-session` for an
+  unrelated task, or raise `history_token_budget` for that profile.
+- Seeing many mid-turn events in developer mode: give the `plugin_authoring` profile a larger
+  `history_token_budget`.
+
+Nothing is sent to the model to produce this report, and the numbers are never shown to the model.
 
 ### 2.3 Modes: Customer vs. Developer
 

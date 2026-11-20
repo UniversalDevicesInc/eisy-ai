@@ -45,7 +45,6 @@ search tool is used automatically in either mode, and when customer mode's provi
       "stream": true,
       "url": null,
       "max_tokens": 64000,
-      "cache_ttl": "5m",
       "max_iterations": 20,
       "history_token_budget": 20000,
       "fabrication_guard_mode": "log",
@@ -59,7 +58,6 @@ search tool is used automatically in either mode, and when customer mode's provi
       "stream": true,
       "url": null,
       "max_tokens": 64000,
-      "cache_ttl": "5m",
       "max_iterations": 50,
       "history_token_budget": 20000,
       "fabrication_guard_mode": "log",
@@ -190,7 +188,7 @@ As long as you're signed in, each mode (customer and developer) keeps its own co
 history — and, separately, can hold more than one *named* session, the way browser tabs or
 documents do. Your current session keeps growing as you talk, survives reconnecting, and (on
 installations with persistent session storage turned on) survives a full restart of eisy-ai
-itself. Seven commands manage it, each sent as a message containing *only* the command (plus an id
+itself. Eight commands manage it, each sent as a message containing *only* the command (plus an id
 and/or name where one is needed):
 
 | Command | What it does |
@@ -202,6 +200,7 @@ and/or name where one is needed):
 | `/delete-session <id>` | Removes a saved session. Deleting your current session automatically starts a new empty one in its place — you always have at least one. |
 | `/delete-all-sessions` | Removes every saved session in the current mode at once, then starts a fresh empty one in its place — you always have at least one. |
 | `/compact-session` | Summarizes your current session's older turns right away, to free up room, even if it isn't full yet. |
+| `/session-stats` | Shows how much of the model's context this session uses (system prompt, tools, history), plus recent token usage and cache hits. |
 
 Customer and developer mode sessions are entirely separate: `/sessions` only shows (and
 `/new-session`/`/load-session`/etc. only act on) the mode you're currently in.
@@ -214,6 +213,14 @@ As a long conversation grows, you may see an *italic* note like *"Session histor
 its budget..."* -- this is automatic, just letting you know; you can compact right away yourself
 with `/compact-session` any time, or just keep going and it'll summarize the older turns for you
 once it's actually full.
+
+`/session-stats` shows where a session's context is going without calling the AI model: the next
+request's size against the model's window and the history budget, split into the system prompt
+blocks, the tools and the history (compacted summary, conversation text, tool calls and results);
+the last request's cache reads/writes and hit rate; session totals including an estimated cost;
+compactions; and the last five requests. Component sizes are scaled to the provider's real token
+count for the last request when one is comparable, otherwise labelled as estimates. See
+[USER_GUIDE.md](USER_GUIDE.md#seeing-how-full-a-session-is-session-stats) for how to read each part.
 
 ---
 
